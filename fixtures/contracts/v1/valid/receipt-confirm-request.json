@@ -1,0 +1,31 @@
+{
+  "synthetic": true,
+  "source": "PasarAI_Handoff_Package/demo_data/seed_data/receipt_ground_truth.json",
+  "schema_id": "receipt-confirm.request",
+  "payload": {
+    "merchant_id": "m_kak_lina_001",
+    "receipt_event_id": "evt_receipt_001",
+    "occurred_at": "2026-07-12T08:10:00+08:00",
+    "extraction": {
+      "receipt_id": "SBR-120726-184",
+      "supplier_name": "Sinar Borong Jaya",
+      "date": "2026-07-12",
+      "currency": "MYR",
+      "line_items": [
+        {
+          "raw_name": "Telur Gred B 30 biji x 3 tray",
+          "normalized_component_id": "c_egg",
+          "quantity": "3",
+          "uom": "tray",
+          "pack_size": "30",
+          "unit_price_rm": "16.50",
+          "total_price_rm": "49.50",
+          "confidence": "0.98"
+        }
+      ],
+      "total_rm": "49.50",
+      "overall_confidence": "0.98",
+      "ambiguities": []
+    }
+  }
+}

@@ -1,0 +1,69 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "google-sheets-status.response",
+  "x-typescript-name": "GoogleSheetsStatusResponse",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "state",
+    "spreadsheet_id",
+    "spreadsheet_url",
+    "spreadsheet_title",
+    "sync_mode",
+    "last_export_at",
+    "last_import_at",
+    "last_reconciled_at",
+    "watch_expires_at",
+    "last_error"
+  ],
+  "properties": {
+    "state": {
+      "type": "string",
+      "enum": ["not_connected", "connected", "error"]
+    },
+    "spreadsheet_id": {
+      "type": ["string", "null"],
+      "minLength": 1
+    },
+    "spreadsheet_url": {
+      "type": ["string", "null"],
+      "format": "uri"
+    },
+    "spreadsheet_title": {
+      "type": ["string", "null"],
+      "minLength": 1
+    },
+    "sync_mode": {
+      "type": "string",
+      "enum": ["manual", "automatic"]
+    },
+    "last_export_at": {
+      "anyOf": [
+        { "$ref": "../shared/primitives.schema.json#/$defs/DateTime" },
+        { "type": "null" }
+      ]
+    },
+    "last_import_at": {
+      "anyOf": [
+        { "$ref": "../shared/primitives.schema.json#/$defs/DateTime" },
+        { "type": "null" }
+      ]
+    },
+    "last_reconciled_at": {
+      "anyOf": [
+        { "$ref": "../shared/primitives.schema.json#/$defs/DateTime" },
+        { "type": "null" }
+      ]
+    },
+    "watch_expires_at": {
+      "anyOf": [
+        { "$ref": "../shared/primitives.schema.json#/$defs/DateTime" },
+        { "type": "null" }
+      ]
+    },
+    "last_error": {
+      "type": ["string", "null"],
+      "minLength": 1
+    }
+  }
+}

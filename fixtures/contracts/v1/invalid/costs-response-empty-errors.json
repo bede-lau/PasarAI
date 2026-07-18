@@ -1,0 +1,9 @@
+{
+  "synthetic": true,
+  "expected_failure": "rejected response requires non-empty errors",
+  "schema_id": "costs.response",
+  "payload": {
+    "state": "rejected",
+    "errors": []
+  }
+}

@@ -1,0 +1,10 @@
+product_id,component_id,component_name,baseline_cost_per_pack_rm,current_cost_per_pack_rm,uom
+p_nlb_001,c_rice,Beras,0.38,0.38,kg
+p_nlb_001,c_coconut,Santan,0.55,0.61,kg
+p_nlb_001,c_egg,Telur,0.45,0.55,unit
+p_nlb_001,c_anchovy,Ikan Bilis,0.38,0.38,kg
+p_nlb_001,c_peanut,Kacang Tanah,0.15,0.15,kg
+p_nlb_001,c_sambal,Sambal + Minyak,0.47,0.55,batch_share
+p_nlb_001,c_cucumber,Timun,0.11,0.11,kg
+p_nlb_001,c_packaging,Bekas Makanan,0.16,0.2,unit
+p_nlb_001,c_fuel,Gas + Condiments,0.25,0.25,allocation

@@ -1,0 +1,155 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "daily-summary.response",
+  "x-typescript-name": "DailySummaryResponse",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["merchant_id", "date", "revenue_rm", "cogs_rm", "gross_profit_rm", "gross_margin_pct", "data_completeness", "top_cost_drivers", "baseline_comparison", "price_floor", "cost_stack", "evidence", "assumptions"],
+  "properties": {
+    "merchant_id": { "$ref": "../shared/primitives.schema.json#/$defs/Identifier" },
+    "date": { "$ref": "../shared/primitives.schema.json#/$defs/Date" },
+    "revenue_rm": { "$ref": "../shared/primitives.schema.json#/$defs/MyrAmount" },
+    "cogs_rm": { "$ref": "../shared/primitives.schema.json#/$defs/MyrAmount" },
+    "gross_profit_rm": { "$ref": "../shared/primitives.schema.json#/$defs/MyrAmount" },
+    "gross_margin_pct": { "$ref": "../shared/primitives.schema.json#/$defs/DecimalString" },
+    "data_completeness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["state", "missing_inputs"],
+      "properties": {
+        "state": { "enum": ["complete", "partial"] },
+        "missing_inputs": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "top_cost_drivers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "contribution_rm_per_pack"],
+        "properties": {
+          "name": { "type": "string" },
+          "contribution_rm_per_pack": { "$ref": "../shared/primitives.schema.json#/$defs/MyrAmount" }
+        }
+      }
+    },
+    "baseline_comparison": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["baseline_margin_pct", "margin_change_percentage_points"],
+      "properties": {
+        "baseline_margin_pct": { "$ref": "../shared/primitives.schema.json#/$defs/DecimalString" },
+        "margin_change_percentage_points": { "$ref": "../shared/primitives.schema.json#/$defs/DecimalString" }
+      }
+    },
+    "price_floor": {
+      "anyOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["target_gross_margin_pct", "price_floor_rm", "assumption"],
+          "properties": {
+            "target_gross_margin_pct": { "$ref": "../shared/primitives.schema.json#/$defs/DecimalString" },
+            "price_floor_rm": { "$ref": "../shared/primitives.schema.json#/$defs/NonNegativeMyrAmount" },
+            "assumption": { "const": "current_unit_cogs" }
+          }
+        },
+        { "type": "null" }
+      ]
+    },
+    "cost_stack": {
+      "anyOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["baseline_unit_cogs_rm", "current_unit_cogs_rm", "components"],
+          "properties": {
+            "baseline_comparison_date": {
+              "$ref": "../shared/primitives.schema.json#/$defs/Date",
+              "description": "Previous calendar day used for the day-over-day cost comparison."
+            },
+            "baseline_effective_date": {
+              "$ref": "../shared/primitives.schema.json#/$defs/Date",
+              "description": "Deprecated compatibility alias for baseline_comparison_date."
+            },
+            "baseline_unit_cogs_rm": { "$ref": "../shared/primitives.schema.json#/$defs/NonNegativeMyrAmount" },
+            "current_unit_cogs_rm": { "$ref": "../shared/primitives.schema.json#/$defs/NonNegativeMyrAmount" },
+            "components": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["component_id", "name", "baseline_cost_rm_per_pack", "current_cost_rm_per_pack", "change_rm_per_pack", "evidence_id"],
+                "properties": {
+                  "component_id": { "$ref": "../shared/primitives.schema.json#/$defs/Identifier" },
+                  "name": { "type": "string", "minLength": 1 },
+                  "baseline_cost_rm_per_pack": { "$ref": "../shared/primitives.schema.json#/$defs/NonNegativeMyrAmount" },
+                  "current_cost_rm_per_pack": { "$ref": "../shared/primitives.schema.json#/$defs/NonNegativeMyrAmount" },
+                  "change_rm_per_pack": { "$ref": "../shared/primitives.schema.json#/$defs/MyrAmount" },
+                  "evidence_id": {
+                    "anyOf": [
+                      { "$ref": "../shared/primitives.schema.json#/$defs/Identifier" },
+                      { "type": "null" }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        { "type": "null" }
+      ]
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["evidence_id", "title", "asset_uri", "receipt_id", "supplier_name", "transcript", "line_items"],
+        "properties": {
+          "evidence_id": { "$ref": "../shared/primitives.schema.json#/$defs/Identifier" },
+          "title": { "type": "string", "minLength": 1 },
+          "asset_uri": { "type": ["string", "null"] },
+          "receipt_id": {
+            "anyOf": [
+              { "$ref": "../shared/primitives.schema.json#/$defs/Identifier" },
+              { "type": "null" }
+            ]
+          },
+          "supplier_name": { "type": ["string", "null"] },
+          "transcript": { "type": ["string", "null"] },
+          "line_items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["raw_name", "component_id", "total_price_rm", "confidence"],
+              "properties": {
+                "raw_name": { "type": "string", "minLength": 1 },
+                "component_id": {
+                  "anyOf": [
+                    { "$ref": "../shared/primitives.schema.json#/$defs/Identifier" },
+                    { "type": "null" }
+                  ]
+                },
+                "total_price_rm": {
+                  "anyOf": [
+                    { "$ref": "../shared/primitives.schema.json#/$defs/NonNegativeMyrAmount" },
+                    { "type": "null" }
+                  ]
+                },
+                "confidence": {
+                  "anyOf": [
+                    { "$ref": "../shared/primitives.schema.json#/$defs/Confidence" },
+                    { "type": "null" }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "assumptions": { "type": "array", "items": { "type": "string" } }
+  }
+}

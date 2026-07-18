@@ -1,0 +1,12 @@
+{
+  "synthetic": true,
+  "source": "PasarAI_Handoff_Package/demo_data/receipts/receipt_003_pasar_pagi.jpg",
+  "schema_id": "receipt-upload.request",
+  "payload": {
+    "merchant_id": "m_kak_lina_001",
+    "occurred_at": "2026-07-12T08:15:00+08:00",
+    "file_name": "receipt_003_pasar_pagi.jpg",
+    "content_type": "image/jpeg",
+    "content_base64": "/9j/2Q=="
+  }
+}

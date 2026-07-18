@@ -1,0 +1,14 @@
+{
+  "merchant_id": "m_kak_lina_001",
+  "display_name": "Kedai Kak Lina Nasi Lemak",
+  "location": "SS2, Petaling Jaya, Selangor",
+  "timezone": "Asia/Kuala_Lumpur",
+  "currency": "MYR",
+  "primary_language": "ms",
+  "supported_languages": [
+    "ms",
+    "en",
+    "zh"
+  ],
+  "target_gross_margin_pct": 40
+}

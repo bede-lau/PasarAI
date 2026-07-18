@@ -1,0 +1,13 @@
+{
+  "name": "@pasarai/finance",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": "./src/index.js",
+  "scripts": {
+    "test": "node --test test/*.test.mjs"
+  },
+  "dependencies": {
+    "decimal.js": "10.6.0"
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "name": "@pasarai/root",
+  "version": "0.0.0",
+  "private": true,
+  "packageManager": "pnpm@10.29.3",
+  "engines": {
+    "node": ">=22 <25",
+    "pnpm": ">=10 <11"
+  },
+  "devDependencies": {
+    "@pasarai/contracts": "workspace:*",
+    "typescript": "7.0.2"
+  },
+  "scripts": {
+    "dev": "pnpm --parallel --filter @pasarai/api --filter @pasarai/web run dev",
+    "lint": "node scripts/quality/lint.mjs",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "pnpm test:unit && pnpm test:contract && pnpm test:integration",
+    "test:scaffold": "node --test tests/scaffold/workspace-scaffold.test.mjs",
+    "test:unit": "pnpm test:scaffold && node --test tests/config/*.test.mjs tests/ci/*.test.mjs tests/docs/*.test.mjs tests/scope/*.test.mjs tests/types/*.test.mjs tests/security/*.test.mjs && pnpm --filter @pasarai/contracts test:unit && pnpm --filter @pasarai/finance test && pnpm --filter @pasarai/analytics test && pnpm --filter @pasarai/api test && pnpm --filter @pasarai/elevenlabs-agent test && pnpm test:databricks && pnpm test:web",
+    "test:elevenlabs": "pnpm --filter @pasarai/elevenlabs-agent test",
+    "test:databricks": "python -m unittest discover -s databricks/tests -p \"test_*.py\"",
+    "test:web": "pnpm --filter @pasarai/web test",
+    "test:web:browser": "pnpm build:web && pnpm --filter @pasarai/web test:browser",
+    "typecheck:web": "pnpm --filter @pasarai/web typecheck",
+    "build:web": "pnpm --filter @pasarai/web build",
+    "test:contract": "node --test tests/contracts/*.contract.test.mjs",
+    "test:integration": "node --test --test-concurrency=1 tests/contracts/*.integration.test.mjs tests/integration/*.test.mjs",
+    "test:qa": "node --test --test-concurrency=1 tests/integration/qa-demo-hardening.test.mjs",
+    "config:check": "node scripts/config/check-env-example.mjs",
+    "seed:synthetic:reset": "node scripts/seed/reset-synthetic.mjs",
+    "demo:reset": "node scripts/seed/reset-demo.mjs",
+    "demo:rehearse": "node scripts/seed/rehearse-demo.mjs",
+    "scope:check": "node scripts/quality/check-scope.mjs",
+    "security:check": "node scripts/security/check-unsafe-values.mjs",
+    "contracts:generate": "pnpm --filter @pasarai/contracts generate",
+    "contracts:check": "pnpm --filter @pasarai/contracts check",
+    "ci:check": "pnpm contracts:check && pnpm lint && pnpm typecheck && pnpm typecheck:web && pnpm test:unit && pnpm test:contract && pnpm config:check && pnpm security:check && pnpm seed:synthetic:reset && pnpm test:integration && pnpm test:web:browser && pnpm scope:check"
+  }
+}

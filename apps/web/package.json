@@ -1,0 +1,33 @@
+{
+  "name": "@pasarai/web",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next typegen && tsc --noEmit && node ../../scripts/quality/lint.mjs --scan-root apps/web",
+    "typecheck": "next typegen && tsc --noEmit",
+    "test": "vitest run",
+    "test:browser": "node --test --test-concurrency=1 test/browser/mobile-browser.mjs",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@pasarai/contracts": "workspace:*",
+    "lucide-react": "^1.24.0",
+    "next": "16.2.10",
+    "react": "19.2.7",
+    "react-dom": "19.2.7"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "6.9.1",
+    "@testing-library/react": "16.3.2",
+    "@testing-library/user-event": "14.6.1",
+    "@types/node": "24.10.1",
+    "@types/react": "19.2.14",
+    "@types/react-dom": "19.2.3",
+    "jsdom": "29.1.1",
+    "typescript": "5.9.3",
+    "vitest": "4.1.10"
+  }
+}

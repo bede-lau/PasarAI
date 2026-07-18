@@ -1,0 +1,38 @@
+{
+  "baseline_unit_cogs_rm": 2.9,
+  "current_unit_cogs_rm": 3.18,
+  "cost_increase_rm": 0.28,
+  "cost_increase_pct": 9.66,
+  "today": {
+    "quantity": 40,
+    "unit_price_rm": 5.0,
+    "revenue_rm": 200.0,
+    "cogs_rm": 127.2,
+    "gross_profit_rm": 72.8,
+    "gross_margin_pct": 36.4,
+    "baseline_margin_pct": 42.0,
+    "margin_change_percentage_points": -5.6
+  },
+  "cost_driver_contributions_rm_per_pack": {
+    "Telur": 0.1,
+    "Sambal + Minyak": 0.08,
+    "Santan": 0.06,
+    "Bekas Makanan": 0.04
+  },
+  "price_floor_for_40pct_margin_rm": 5.3,
+  "scenario_40_at_5_50": {
+    "revenue_rm": 220.0,
+    "cogs_rm": 127.2,
+    "gross_profit_rm": 92.8,
+    "gross_margin_pct": 42.18,
+    "incremental_gross_profit_vs_today_rm": 20.0
+  },
+  "scenario_35_at_5_50": {
+    "revenue_rm": 192.5,
+    "cogs_rm": 111.3,
+    "gross_profit_rm": 81.2,
+    "gross_margin_pct": 42.18,
+    "incremental_gross_profit_vs_today_rm": 8.4
+  },
+  "calculation_policy": "All currency arithmetic must use Decimal, not binary floating point. Round currency to 2 decimals only at output boundaries."
+}

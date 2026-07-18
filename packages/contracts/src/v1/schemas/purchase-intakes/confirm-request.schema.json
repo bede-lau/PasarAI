@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "purchase-intake-confirm.request",
+  "x-typescript-name": "PurchaseIntakeConfirmRequest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "merchant_id",
+    "intake_id",
+    "expected_version",
+    "confirmation_token"
+  ],
+  "properties": {
+    "merchant_id": {
+      "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+    },
+    "intake_id": {
+      "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+    },
+    "expected_version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "confirmation_token": {
+      "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+    }
+  }
+}

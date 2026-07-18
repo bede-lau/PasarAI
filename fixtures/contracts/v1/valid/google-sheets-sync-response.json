@@ -1,0 +1,13 @@
+{
+  "synthetic": true,
+  "schema_id": "google-sheets-sync.response",
+  "payload": {
+    "state": "completed",
+    "job_id": "google_export_synthetic_001",
+    "operation": "export",
+    "rows_processed": 7,
+    "errors": 0,
+    "spreadsheet_url": "https://docs.google.com/spreadsheets/d/sheet_synthetic_001/edit",
+    "completed_at": "2026-07-16T12:01:00.000Z"
+  }
+}

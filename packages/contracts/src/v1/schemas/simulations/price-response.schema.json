@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "price-simulation.response",
+  "x-typescript-name": "PriceSimulationResponse",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["revenue_rm", "cogs_rm", "gross_profit_rm", "gross_margin_pct", "assumption"],
+  "properties": {
+    "revenue_rm": { "$ref": "../shared/primitives.schema.json#/$defs/MyrAmount" },
+    "cogs_rm": { "$ref": "../shared/primitives.schema.json#/$defs/MyrAmount" },
+    "gross_profit_rm": { "$ref": "../shared/primitives.schema.json#/$defs/MyrAmount" },
+    "gross_margin_pct": { "$ref": "../shared/primitives.schema.json#/$defs/DecimalString" },
+    "incremental_gross_profit_vs_today_rm": { "$ref": "../shared/primitives.schema.json#/$defs/MyrAmount" },
+    "assumption": { "const": "constant_demand" }
+  }
+}

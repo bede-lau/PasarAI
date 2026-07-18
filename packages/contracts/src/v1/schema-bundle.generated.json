@@ -1,0 +1,3168 @@
+{
+  "version": "v1",
+  "schemas": {
+    "analytics-activity.response": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "analytics-activity.response",
+      "x-typescript-name": "AnalyticsActivityResponse",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "merchant_id",
+        "product_id",
+        "from",
+        "to",
+        "items"
+      ],
+      "properties": {
+        "merchant_id": {
+          "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+        },
+        "product_id": {
+          "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+        },
+        "from": {
+          "$ref": "../shared/primitives.schema.json#/$defs/Date"
+        },
+        "to": {
+          "$ref": "../shared/primitives.schema.json#/$defs/Date"
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "event_id",
+              "occurred_at",
+              "source",
+              "type",
+              "state",
+              "title",
+              "evidence_uri",
+              "target_event_id"
+            ],
+            "properties": {
+              "event_id": {
+                "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+              },
+              "occurred_at": {
+                "$ref": "../shared/primitives.schema.json#/$defs/DateTime"
+              },
+              "source": {
+                "type": "string",
+                "minLength": 1
+              },
+              "type": {
+                "type": "string",
+                "minLength": 1
+              },
+              "state": {
+                "enum": [
+                  "committed",
+                  "clarification_required",
+                  "rejected",
+                  "recorded"
+                ]
+              },
+              "title": {
+                "type": "string",
+                "minLength": 1
+              },
+              "evidence_uri": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "target_event_id": {
+                "anyOf": [
+                  {
+                    "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "analytics-day-status.request": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "analytics-day-status.request",
+      "x-typescript-name": "AnalyticsDayStatusRequest",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "merchant_id",
+        "product_id",
+        "date",
+        "occurred_at",
+        "business_day_state",
+        "sold_out_state"
+      ],
+      "properties": {
+        "merchant_id": {
+          "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+        },
+        "product_id": {
+          "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+        },
+        "date": {
+          "$ref": "../shared/primitives.schema.json#/$defs/Date"
+        },
+        "occurred_at": {
+          "$ref": "../shared/primitives.schema.json#/$defs/DateTime"
+        },
+        "business_day_state": {
+          "enum": [
+            "closed_complete",
+            "closed_no_sales"
+          ]
+        },
+        "sold_out_state": {
+          "enum": [
+            "yes",
+            "no",
+            "unknown"
+          ]
+        }
+      }
+    },
+    "analytics-day-status.response": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "analytics-day-status.response",
+      "x-typescript-name": "AnalyticsDayStatusResponse",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "state",
+        "event_id",
+        "date",
+        "business_day_state",
+        "sold_out_state"
+      ],
+      "properties": {
+        "state": {
+          "const": "committed"
+        },
+        "event_id": {
+          "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+        },
+        "date": {
+          "$ref": "../shared/primitives.schema.json#/$defs/Date"
+        },
+        "business_day_state": {
+          "enum": [
+            "closed_complete",
+            "closed_no_sales"
+          ]
+        },
+        "sold_out_state": {
+          "enum": [
+            "yes",
+            "no",
+            "unknown"
+          ]
+        }
+      }
+    },
+    "analytics-forecast.response": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "analytics-forecast.response",
+      "x-typescript-name": "AnalyticsForecastResponse",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "merchant_id",
+        "product_id",
+        "as_of",
+        "status",
+        "generated_at",
+        "data_through",
+        "model_version",
+        "reasons",
+        "training_days",
+        "diagnostics",
+        "forecast"
+      ],
+      "properties": {
+        "merchant_id": {
+          "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+        },
+        "product_id": {
+          "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+        },
+        "as_of": {
+          "$ref": "../shared/primitives.schema.json#/$defs/Date"
+        },
+        "status": {
+          "enum": [
+            "unavailable",
+            "shadow",
+            "ready"
+          ]
+        },
+        "generated_at": {
+          "$ref": "../shared/primitives.schema.json#/$defs/DateTime"
+        },
+        "data_through": {
+          "anyOf": [
+            {
+              "$ref": "../shared/primitives.schema.json#/$defs/Date"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "model_version": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "reasons": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "training_days": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "diagnostics": {
+          "anyOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "model_name",
+                "mae",
+                "wape_pct",
+                "prediction_interval_coverage_pct",
+                "backtest_windows",
+                "accuracy_state"
+              ],
+              "properties": {
+                "model_name": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "mae": {
+                  "$ref": "../shared/primitives.schema.json#/$defs/NonNegativeDecimalString"
+                },
+                "wape_pct": {
+                  "$ref": "../shared/primitives.schema.json#/$defs/NonNegativeDecimalString"
+                },
+                "prediction_interval_coverage_pct": {
+                  "anyOf": [
+                    {
+                      "$ref": "../shared/primitives.schema.json#/$defs/NonNegativeDecimalString"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "backtest_windows": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "accuracy_state": {
+                  "enum": [
+                    "pass",
+                    "fail",
+                    "insufficient"
+                  ]
+                }
+              }
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "forecast": {
+          "anyOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "date",
+                "p10",
+                "p50",
+                "p90",
+                "planning_note"
+              ],
+              "properties": {
+                "date": {
+                  "$ref": "../shared/primitives.schema.json#/$defs/Date"
+                },
+                "p10": {
+                  "$ref": "../shared/primitives.schema.json#/$defs/NonNegativeDecimalString"
+                },
+                "p50": {
+                  "$ref": "../shared/primitives.schema.json#/$defs/NonNegativeDecimalString"
+                },
+                "p90": {
+                  "$ref": "../shared/primitives.schema.json#/$defs/NonNegativeDecimalString"
+                },
+                "planning_note": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "analytics-overview.response": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "analytics-overview.response",
+      "x-typescript-name": "AnalyticsOverviewResponse",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "merchant_id",
+        "product_id",
+        "from",
+        "to",
+        "generated_at",
+        "data_through",
+        "freshness",
+        "completeness_coverage_pct",
+        "quality_flags",
+        "days",
+        "alerts",
+        "cost_waterfall"
+      ],
+      "properties": {
+        "merchant_id": {
+          "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+        },
+        "product_id": {
+          "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+        },
+        "from": {
+          "$ref": "../shared/primitives.schema.json#/$defs/Date"
+        },
+        "to": {
+          "$ref": "../shared/primitives.schema.json#/$defs/Date"
+        },
+        "generated_at": {
+          "$ref": "../shared/primitives.schema.json#/$defs/DateTime"
+        },
+        "data_through": {
+          "anyOf": [
+            {
+              "$ref": "../shared/primitives.schema.json#/$defs/Date"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "freshness": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "state",
+            "lag_seconds",
+            "source_max_ingested_at",
+            "projection_version"
+          ],
+          "properties": {
+            "state": {
+              "enum": [
+                "fresh",
+                "stale",
+                "unavailable"
+              ]
+            },
+            "lag_seconds": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "source_max_ingested_at": {
+              "anyOf": [
+                {
+                  "$ref": "../shared/primitives.schema.json#/$defs/DateTime"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "projection_version": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        "completeness_coverage_pct": {
+          "$ref": "../shared/primitives.schema.json#/$defs/DecimalString"
+        },
+        "quality_flags": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "days": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "date",
+              "state",
+              "quantity",
+              "revenue_rm",
+              "cogs_rm",
+              "gross_profit_rm",
+              "gross_margin_pct",
+              "sold_out_state"
+            ],
+            "properties": {
+              "date": {
+                "$ref": "../shared/primitives.schema.json#/$defs/Date"
+              },
+              "state": {
+                "enum": [
+                  "complete",
+                  "partial",
+                  "closed_no_sales",
+                  "missing"
+                ]
+              },
+              "quantity": {
+                "anyOf": [
+                  {
+                    "$ref": "../shared/primitives.schema.json#/$defs/NonNegativeDecimalString"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "revenue_rm": {
+                "anyOf": [
+                  {
+                    "$ref": "../shared/primitives.schema.json#/$defs/MyrAmount"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "cogs_rm": {
+                "anyOf": [
+                  {
+                    "$ref": "../shared/primitives.schema.json#/$defs/MyrAmount"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "gross_profit_rm": {
+                "anyOf": [
+                  {
+                    "$ref": "../shared/primitives.schema.json#/$defs/MyrAmount"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "gross_margin_pct": {
+                "anyOf": [
+                  {
+                    "$ref": "../shared/primitives.schema.json#/$defs/DecimalString"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "sold_out_state": {
+                "enum": [
+                  "yes",
+                  "no",
+                  "unknown"
+                ]
+              }
+            }
+          }
+        },
+        "alerts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "severity",
+              "title",
+              "message",
+              "metric",
+              "threshold",
+              "evidence_id",
+              "action"
+            ],
+            "properties": {
+              "id": {
+                "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+              },
+              "severity": {
+                "enum": [
+                  "info",
+                  "warning",
+                  "critical"
+                ]
+              },
+              "title": {
+                "type": "string",
+                "minLength": 1
+              },
+              "message": {
+                "type": "string",
+                "minLength": 1
+              },
+              "metric": {
+                "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+              },
+              "threshold": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "evidence_id": {
+                "anyOf": [
+                  {
+                    "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "action": {
+                "enum": [
+                  "record_sales",
+                  "review_receipt",
+                  "resolve_clarification",
+                  "inspect_cost",
+                  "none"
+                ]
+              }
+            }
+          }
+        },
+        "cost_waterfall": {
+          "anyOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "baseline_date",
+                "baseline_unit_cogs_rm",
+                "current_unit_cogs_rm",
+                "components"
+              ],
+              "properties": {
+                "baseline_date": {
+                  "anyOf": [
+                    {
+                      "$ref": "../shared/primitives.schema.json#/$defs/Date"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "baseline_unit_cogs_rm": {
+                  "$ref": "../shared/primitives.schema.json#/$defs/NonNegativeMyrAmount"
+                },
+                "current_unit_cogs_rm": {
+                  "$ref": "../shared/primitives.schema.json#/$defs/NonNegativeMyrAmount"
+                },
+                "components": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "component_id",
+                      "name",
+                      "baseline_cost_rm_per_pack",
+                      "current_cost_rm_per_pack",
+                      "change_rm_per_pack",
+                      "evidence_id"
+                    ],
+                    "properties": {
+                      "component_id": {
+                        "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+                      },
+                      "name": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "baseline_cost_rm_per_pack": {
+                        "$ref": "../shared/primitives.schema.json#/$defs/NonNegativeMyrAmount"
+                      },
+                      "current_cost_rm_per_pack": {
+                        "$ref": "../shared/primitives.schema.json#/$defs/NonNegativeMyrAmount"
+                      },
+                      "change_rm_per_pack": {
+                        "$ref": "../shared/primitives.schema.json#/$defs/MyrAmount"
+                      },
+                      "evidence_id": {
+                        "anyOf": [
+                          {
+                            "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "component-catalog.response": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "component-catalog.response",
+      "x-typescript-name": "ComponentCatalogResponse",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "merchant_id",
+        "components"
+      ],
+      "properties": {
+        "merchant_id": {
+          "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+        },
+        "components": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "component_id",
+              "name"
+            ],
+            "properties": {
+              "component_id": {
+                "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        }
+      }
+    },
+    "corrections.request": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "corrections.request",
+      "x-typescript-name": "CorrectionRequest",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "merchant_id",
+        "target_event_id",
+        "occurred_at",
+        "reason",
+        "replacement_payload",
+        "evidence"
+      ],
+      "properties": {
+        "merchant_id": {
+          "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+        },
+        "target_event_id": {
+          "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+        },
+        "occurred_at": {
+          "$ref": "../shared/primitives.schema.json#/$defs/DateTime"
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        },
+        "replacement_payload": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "changes"
+          ],
+          "properties": {
+            "changes": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "kind",
+                      "field",
+                      "corrected_value"
+                    ],
+                    "properties": {
+                      "kind": {
+                        "const": "money"
+                      },
+                      "field": {
+                        "const": "unit_price_rm"
+                      },
+                      "line_index": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "previous_value": {
+                        "anyOf": [
+                          {
+                            "$ref": "../shared/primitives.schema.json#/$defs/MyrAmount"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "corrected_value": {
+                        "$ref": "../shared/primitives.schema.json#/$defs/MyrAmount"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "kind",
+                      "field",
+                      "corrected_value"
+                    ],
+                    "properties": {
+                      "kind": {
+                        "const": "decimal"
+                      },
+                      "field": {
+                        "const": "quantity"
+                      },
+                      "line_index": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "previous_value": {
+                        "anyOf": [
+                          {
+                            "$ref": "../shared/primitives.schema.json#/$defs/NonNegativeDecimalString"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "corrected_value": {
+                        "$ref": "../shared/primitives.schema.json#/$defs/NonNegativeDecimalString"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "kind",
+                      "field",
+                      "corrected_value"
+                    ],
+                    "properties": {
+                      "kind": {
+                        "const": "identifier"
+                      },
+                      "field": {
+                        "const": "product_id"
+                      },
+                      "line_index": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "previous_value": {
+                        "anyOf": [
+                          {
+                            "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "corrected_value": {
+                        "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "kind",
+                      "field",
+                      "corrected_value"
+                    ],
+                    "properties": {
+                      "kind": {
+                        "const": "text"
+                      },
+                      "field": {
+                        "const": "source_language"
+                      },
+                      "previous_value": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "corrected_value": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "evidence": {
+          "$ref": "../shared/primitives.schema.json#/$defs/Evidence"
+        }
+      }
+    },
+    "corrections.response": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "corrections.response",
+      "x-typescript-name": "CorrectionResponse",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "state",
+        "correction_event_id",
+        "target_event_id",
+        "changes"
+      ],
+      "properties": {
+        "state": {
+          "const": "committed"
+        },
+        "correction_event_id": {
+          "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+        },
+        "target_event_id": {
+          "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+        },
+        "changes": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "field",
+              "before_value",
+              "after_value"
+            ],
+            "properties": {
+              "field": {
+                "type": "string",
+                "minLength": 1
+              },
+              "line_index": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "before_value": {
+                "type": "string"
+              },
+              "after_value": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "cost-changes.request": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "cost-changes.request",
+      "x-typescript-name": "CostChangeRequest",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "merchant_id",
+        "occurred_at",
+        "component_id",
+        "increase_rm",
+        "evidence"
+      ],
+      "properties": {
+        "merchant_id": {
+          "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+        },
+        "pack_size": {
+          "$ref": "../shared/primitives.schema.json#/$defs/PositiveDecimalString"
+        },
+        "clarification_source": {
+          "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+        },
+        "occurred_at": {
+          "$ref": "../shared/primitives.schema.json#/$defs/DateTime"
+        },
+        "component_id": {
+          "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+        },
+        "increase_rm": {
+          "$ref": "../shared/primitives.schema.json#/$defs/NonNegativeMyrAmount"
+        },
+        "evidence": {
+          "$ref": "../shared/primitives.schema.json#/$defs/Evidence"
+        }
+      }
+    },
+    "cost-changes.response": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "cost-changes.response",
+      "x-typescript-name": "CostChangeResponse",
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "state",
+            "event_id",
+            "before_value_rm",
+            "after_value_rm"
+          ],
+          "properties": {
+            "state": {
+              "const": "committed"
+            },
+            "event_id": {
+              "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+            },
+            "before_value_rm": {
+              "$ref": "../shared/primitives.schema.json#/$defs/NonNegativeMyrAmount"
+            },
+            "after_value_rm": {
+              "$ref": "../shared/primitives.schema.json#/$defs/NonNegativeMyrAmount"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "state",
+            "clarification_source",
+            "clarifications"
+          ],
+          "properties": {
+            "state": {
+              "const": "clarification_required"
+            },
+            "clarification_source": {
+              "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+            },
+            "clarifications": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "$ref": "../shared/primitives.schema.json#/$defs/Ambiguity"
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "state",
+            "errors"
+          ],
+          "properties": {
+            "state": {
+              "const": "rejected"
+            },
+            "errors": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "$ref": "../shared/primitives.schema.json#/$defs/ContractError"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "costs.request": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "costs.request",
+      "x-typescript-name": "CostsRequest",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "merchant_id",
+        "occurred_at",
+        "supplier_name",
+        "lines",
+        "evidence"
+      ],
+      "properties": {
+        "merchant_id": {
+          "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+        },
+        "occurred_at": {
+          "$ref": "../shared/primitives.schema.json#/$defs/DateTime"
+        },
+        "source": {
+          "$ref": "../shared/primitives.schema.json#/$defs/SourceKind"
+        },
+        "source_language": {
+          "$ref": "../shared/primitives.schema.json#/$defs/SourceLanguage"
+        },
+        "supplier_name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "metadata": {
+          "$ref": "../shared/primitives.schema.json#/$defs/PurchaseMetadata"
+        },
+        "lines": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "component_id",
+              "quantity",
+              "uom",
+              "pack_size",
+              "total_price_rm",
+              "confidence"
+            ],
+            "properties": {
+              "component_id": {
+                "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+              },
+              "raw_name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "quantity": {
+                "$ref": "../shared/primitives.schema.json#/$defs/NonNegativeDecimalString"
+              },
+              "uom": {
+                "type": "string",
+                "minLength": 1
+              },
+              "pack_size": {
+                "$ref": "../shared/primitives.schema.json#/$defs/NonNegativeDecimalString"
+              },
+              "total_price_rm": {
+                "$ref": "../shared/primitives.schema.json#/$defs/NonNegativeMyrAmount"
+              },
+              "confidence": {
+                "$ref": "../shared/primitives.schema.json#/$defs/Confidence"
+              }
+            }
+          }
+        },
+        "evidence": {
+          "$ref": "../shared/primitives.schema.json#/$defs/Evidence"
+        }
+      }
+    },
+    "costs.response": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "costs.response",
+      "x-typescript-name": "CostsResponse",
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "state",
+            "event_id"
+          ],
+          "properties": {
+            "state": {
+              "const": "committed"
+            },
+            "event_id": {
+              "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "state",
+            "clarifications"
+          ],
+          "properties": {
+            "state": {
+              "const": "clarification_required"
+            },
+            "clarifications": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "$ref": "../shared/primitives.schema.json#/$defs/Ambiguity"
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "state",
+            "errors"
+          ],
+          "properties": {
+            "state": {
+              "const": "rejected"
+            },
+            "errors": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "$ref": "../shared/primitives.schema.json#/$defs/ContractError"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "google-sheets-disconnect.request": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "google-sheets-disconnect.request",
+      "x-typescript-name": "GoogleSheetsDisconnectRequest",
+      "type": "object",
+      "additionalProperties": false
+    },
+    "google-sheets-disconnect.response": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "google-sheets-disconnect.response",
+      "x-typescript-name": "GoogleSheetsDisconnectResponse",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "state"
+      ],
+      "properties": {
+        "state": {
+          "const": "disconnected"
+        }
+      }
+    },
+    "google-sheets-export.request": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "google-sheets-export.request",
+      "x-typescript-name": "GoogleSheetsExportRequest",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "dates": {
+          "type": "array",
+          "maxItems": 366,
+          "items": {
+            "$ref": "../shared/primitives.schema.json#/$defs/Date"
+          }
+        }
+      }
+    },
+    "google-sheets-import.request": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "google-sheets-import.request",
+      "x-typescript-name": "GoogleSheetsImportRequest",
+      "type": "object",
+      "additionalProperties": false
+    },
+    "google-sheets-oauth-complete.request": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "google-sheets-oauth-complete.request",
+      "x-typescript-name": "GoogleSheetsOAuthCompleteRequest",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "code",
+        "state",
+        "redirect_uri"
+      ],
+      "properties": {
+        "code": {
+          "type": "string",
+          "minLength": 1
+        },
+        "state": {
+          "type": "string",
+          "minLength": 32
+        },
+        "redirect_uri": {
+          "type": "string",
+          "format": "uri"
+        }
+      }
+    },
+    "google-sheets-oauth-start.request": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "google-sheets-oauth-start.request",
+      "x-typescript-name": "GoogleSheetsOAuthStartRequest",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "redirect_uri"
+      ],
+      "properties": {
+        "redirect_uri": {
+          "type": "string",
+          "format": "uri"
+        },
+        "spreadsheet_id": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "google-sheets-oauth-start.response": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "google-sheets-oauth-start.response",
+      "x-typescript-name": "GoogleSheetsOAuthStartResponse",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "authorization_url",
+        "state",
+        "expires_at"
+      ],
+      "properties": {
+        "authorization_url": {
+          "type": "string",
+          "format": "uri"
+        },
+        "state": {
+          "type": "string",
+          "minLength": 32
+        },
+        "expires_at": {
+          "$ref": "../shared/primitives.schema.json#/$defs/DateTime"
+        }
+      }
+    },
+    "google-sheets-reconcile.request": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "google-sheets-reconcile.request",
+      "x-typescript-name": "GoogleSheetsReconcileRequest",
+      "type": "object",
+      "additionalProperties": false
+    },
+    "google-sheets-status.response": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "google-sheets-status.response",
+      "x-typescript-name": "GoogleSheetsStatusResponse",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "state",
+        "spreadsheet_id",
+        "spreadsheet_url",
+        "spreadsheet_title",
+        "sync_mode",
+        "last_export_at",
+        "last_import_at",
+        "last_reconciled_at",
+        "watch_expires_at",
+        "last_error"
+      ],
+      "properties": {
+        "state": {
+          "type": "string",
+          "enum": [
+            "not_connected",
+            "connected",
+            "error"
+          ]
+        },
+        "spreadsheet_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        },
+        "spreadsheet_url": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "uri"
+        },
+        "spreadsheet_title": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        },
+        "sync_mode": {
+          "type": "string",
+          "enum": [
+            "manual",
+            "automatic"
+          ]
+        },
+        "last_export_at": {
+          "anyOf": [
+            {
+              "$ref": "../shared/primitives.schema.json#/$defs/DateTime"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "last_import_at": {
+          "anyOf": [
+            {
+              "$ref": "../shared/primitives.schema.json#/$defs/DateTime"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "last_reconciled_at": {
+          "anyOf": [
+            {
+              "$ref": "../shared/primitives.schema.json#/$defs/DateTime"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "watch_expires_at": {
+          "anyOf": [
+            {
+              "$ref": "../shared/primitives.schema.json#/$defs/DateTime"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "last_error": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        }
+      }
+    },
+    "google-sheets-sync-mode.request": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "google-sheets-sync-mode.request",
+      "x-typescript-name": "GoogleSheetsSyncModeRequest",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sync_mode"
+      ],
+      "properties": {
+        "sync_mode": {
+          "type": "string",
+          "enum": [
+            "manual",
+            "automatic"
+          ]
+        }
+      }
+    },
+    "google-sheets-sync.response": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "google-sheets-sync.response",
+      "x-typescript-name": "GoogleSheetsSyncResponse",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "state",
+        "job_id",
+        "operation",
+        "rows_processed",
+        "errors",
+        "spreadsheet_url",
+        "completed_at"
+      ],
+      "properties": {
+        "state": {
+          "const": "completed"
+        },
+        "job_id": {
+          "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+        },
+        "operation": {
+          "type": "string",
+          "enum": [
+            "export",
+            "import",
+            "reconcile"
+          ]
+        },
+        "rows_processed": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "errors": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "spreadsheet_url": {
+          "type": "string",
+          "format": "uri"
+        },
+        "completed_at": {
+          "$ref": "../shared/primitives.schema.json#/$defs/DateTime"
+        }
+      }
+    },
+    "purchase-intake-confirm.request": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "purchase-intake-confirm.request",
+      "x-typescript-name": "PurchaseIntakeConfirmRequest",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "merchant_id",
+        "intake_id",
+        "expected_version",
+        "confirmation_token"
+      ],
+      "properties": {
+        "merchant_id": {
+          "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+        },
+        "intake_id": {
+          "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+        },
+        "expected_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "confirmation_token": {
+          "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+        }
+      }
+    },
+    "purchase-intake-upsert.request": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "purchase-intake-upsert.request",
+      "x-typescript-name": "PurchaseIntakeUpsertRequest",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "merchant_id",
+        "occurred_at",
+        "source",
+        "metadata",
+        "item",
+        "evidence"
+      ],
+      "properties": {
+        "merchant_id": {
+          "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+        },
+        "intake_id": {
+          "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+        },
+        "expected_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "occurred_at": {
+          "$ref": "../shared/primitives.schema.json#/$defs/DateTime"
+        },
+        "source": {
+          "$ref": "../shared/primitives.schema.json#/$defs/SourceKind"
+        },
+        "source_language": {
+          "$ref": "../shared/primitives.schema.json#/$defs/SourceLanguage"
+        },
+        "supplier_name": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "payment_method"
+          ],
+          "properties": {
+            "payment_method": {
+              "const": "cash"
+            },
+            "purchase_location": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "note": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "minLength": 1,
+              "maxLength": 500
+            },
+            "tags": {
+              "type": "array",
+              "maxItems": 20,
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 50
+              }
+            },
+            "external_reference": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "minLength": 1,
+              "maxLength": 200
+            }
+          }
+        },
+        "item": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "component_id": {
+              "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+            },
+            "raw_name": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "quantity": {
+              "$ref": "../shared/primitives.schema.json#/$defs/PositiveDecimalString"
+            },
+            "uom": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 50
+            },
+            "pack_size": {
+              "$ref": "../shared/primitives.schema.json#/$defs/PositiveDecimalString"
+            },
+            "total_price_rm": {
+              "$ref": "../shared/primitives.schema.json#/$defs/NonNegativeMyrAmount"
+            }
+          }
+        },
+        "evidence": {
+          "$ref": "../shared/primitives.schema.json#/$defs/Evidence"
+        }
+      }
+    },
+    "purchase-intake-upsert.response": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "purchase-intake-upsert.response",
+      "x-typescript-name": "PurchaseIntakeUpsertResponse",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "state",
+        "intake_id",
+        "version",
+        "missing_fields",
+        "confirmation_token",
+        "summary"
+      ],
+      "properties": {
+        "state": {
+          "type": "string",
+          "enum": [
+            "clarification_required",
+            "ready_for_confirmation"
+          ]
+        },
+        "intake_id": {
+          "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+        },
+        "version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "missing_fields": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "supplier_name",
+              "item.component_id",
+              "item.quantity",
+              "item.uom",
+              "item.pack_size",
+              "item.total_price_rm"
+            ]
+          }
+        },
+        "confirmation_token": {
+          "anyOf": [
+            {
+              "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "summary": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "supplier_name",
+            "component_id",
+            "item_name",
+            "quantity",
+            "uom",
+            "pack_size",
+            "total_price_rm",
+            "occurred_at",
+            "payment_method",
+            "note"
+          ],
+          "properties": {
+            "supplier_name": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "component_id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "item_name": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "quantity": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "uom": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "pack_size": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "total_price_rm": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "occurred_at": {
+              "$ref": "../shared/primitives.schema.json#/$defs/DateTime"
+            },
+            "payment_method": {
+              "const": "cash"
+            },
+            "note": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "receipt-confirm.request": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "receipt-confirm.request",
+      "x-typescript-name": "ReceiptConfirmRequest",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "merchant_id",
+        "receipt_event_id",
+        "occurred_at",
+        "extraction"
+      ],
+      "properties": {
+        "merchant_id": {
+          "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+        },
+        "receipt_event_id": {
+          "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+        },
+        "occurred_at": {
+          "$ref": "../shared/primitives.schema.json#/$defs/DateTime"
+        },
+        "extraction": {
+          "$ref": "receipt-extraction"
+        }
+      }
+    },
+    "receipt-extraction": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "receipt-extraction",
+      "x-typescript-name": "ReceiptExtraction",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "receipt_id",
+        "supplier_name",
+        "date",
+        "currency",
+        "line_items",
+        "total_rm",
+        "overall_confidence",
+        "ambiguities"
+      ],
+      "properties": {
+        "receipt_id": {
+          "anyOf": [
+            {
+              "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "supplier_name": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "date": {
+          "anyOf": [
+            {
+              "$ref": "../shared/primitives.schema.json#/$defs/Date"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "currency": {
+          "const": "MYR"
+        },
+        "line_items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "raw_name",
+              "normalized_component_id",
+              "quantity",
+              "uom",
+              "pack_size",
+              "unit_price_rm",
+              "total_price_rm",
+              "confidence"
+            ],
+            "properties": {
+              "raw_name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "normalized_component_id": {
+                "anyOf": [
+                  {
+                    "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "quantity": {
+                "anyOf": [
+                  {
+                    "$ref": "../shared/primitives.schema.json#/$defs/NonNegativeDecimalString"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "uom": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "pack_size": {
+                "anyOf": [
+                  {
+                    "$ref": "../shared/primitives.schema.json#/$defs/NonNegativeDecimalString"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "unit_price_rm": {
+                "anyOf": [
+                  {
+                    "$ref": "../shared/primitives.schema.json#/$defs/NonNegativeMyrAmount"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "total_price_rm": {
+                "anyOf": [
+                  {
+                    "$ref": "../shared/primitives.schema.json#/$defs/NonNegativeMyrAmount"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "confidence": {
+                "$ref": "../shared/primitives.schema.json#/$defs/Confidence"
+              }
+            }
+          }
+        },
+        "total_rm": {
+          "anyOf": [
+            {
+              "$ref": "../shared/primitives.schema.json#/$defs/NonNegativeMyrAmount"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "overall_confidence": {
+          "$ref": "../shared/primitives.schema.json#/$defs/Confidence"
+        },
+        "ambiguities": {
+          "type": "array",
+          "items": {
+            "$ref": "../shared/primitives.schema.json#/$defs/Ambiguity"
+          }
+        }
+      }
+    },
+    "receipt-review-upsert.request": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "receipt-review-upsert.request",
+      "x-typescript-name": "ReceiptReviewUpsertRequest",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "merchant_id",
+        "receipt_event_id",
+        "occurred_at",
+        "review_state",
+        "extraction"
+      ],
+      "properties": {
+        "merchant_id": {
+          "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+        },
+        "receipt_event_id": {
+          "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+        },
+        "occurred_at": {
+          "$ref": "../shared/primitives.schema.json#/$defs/DateTime"
+        },
+        "review_state": {
+          "type": "string",
+          "enum": [
+            "draft",
+            "archived"
+          ]
+        },
+        "extraction": {
+          "$ref": "receipt-extraction"
+        }
+      }
+    },
+    "receipt-review-upsert.response": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "receipt-review-upsert.response",
+      "x-typescript-name": "ReceiptReviewUpsertResponse",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "state",
+        "receipt_event_id",
+        "review_event_id",
+        "version"
+      ],
+      "properties": {
+        "state": {
+          "type": "string",
+          "enum": [
+            "saved",
+            "archived"
+          ]
+        },
+        "receipt_event_id": {
+          "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+        },
+        "review_event_id": {
+          "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+        },
+        "version": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "receipt-reviews.response": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "receipt-reviews.response",
+      "x-typescript-name": "ReceiptReviewsResponse",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "merchant_id",
+        "receipts"
+      ],
+      "properties": {
+        "merchant_id": {
+          "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+        },
+        "receipts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "receipt_event_id",
+              "review_state",
+              "version",
+              "title",
+              "image_uri",
+              "uploaded_at",
+              "updated_at",
+              "extraction",
+              "confirmed",
+              "cost_event_id",
+              "verified_at",
+              "material_changes"
+            ],
+            "properties": {
+              "receipt_event_id": {
+                "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+              },
+              "review_state": {
+                "type": "string",
+                "enum": [
+                  "draft",
+                  "verified"
+                ]
+              },
+              "version": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "title": {
+                "type": "string",
+                "minLength": 1
+              },
+              "image_uri": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "uploaded_at": {
+                "$ref": "../shared/primitives.schema.json#/$defs/DateTime"
+              },
+              "updated_at": {
+                "$ref": "../shared/primitives.schema.json#/$defs/DateTime"
+              },
+              "extraction": {
+                "$ref": "receipt-extraction"
+              },
+              "confirmed": {
+                "type": "boolean"
+              },
+              "cost_event_id": {
+                "anyOf": [
+                  {
+                    "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "verified_at": {
+                "anyOf": [
+                  {
+                    "$ref": "../shared/primitives.schema.json#/$defs/DateTime"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "material_changes": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "component_id",
+                    "component_name",
+                    "product_id",
+                    "quantity",
+                    "uom",
+                    "pack_size",
+                    "total_price_rm",
+                    "previous_cost_rm_per_pack",
+                    "current_cost_rm_per_pack",
+                    "change_rm_per_pack"
+                  ],
+                  "properties": {
+                    "component_id": {
+                      "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+                    },
+                    "component_name": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "product_id": {
+                      "anyOf": [
+                        {
+                          "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "quantity": {
+                      "$ref": "../shared/primitives.schema.json#/$defs/PositiveDecimalString"
+                    },
+                    "uom": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "pack_size": {
+                      "$ref": "../shared/primitives.schema.json#/$defs/PositiveDecimalString"
+                    },
+                    "total_price_rm": {
+                      "$ref": "../shared/primitives.schema.json#/$defs/NonNegativeMyrAmount"
+                    },
+                    "previous_cost_rm_per_pack": {
+                      "anyOf": [
+                        {
+                          "$ref": "../shared/primitives.schema.json#/$defs/NonNegativeMyrAmount"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "current_cost_rm_per_pack": {
+                      "$ref": "../shared/primitives.schema.json#/$defs/NonNegativeMyrAmount"
+                    },
+                    "change_rm_per_pack": {
+                      "anyOf": [
+                        {
+                          "$ref": "../shared/primitives.schema.json#/$defs/MyrAmount"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "receipt-upload.request": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "receipt-upload.request",
+      "x-typescript-name": "ReceiptUploadRequest",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "merchant_id",
+        "occurred_at",
+        "file_name",
+        "content_type",
+        "content_base64"
+      ],
+      "properties": {
+        "merchant_id": {
+          "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+        },
+        "occurred_at": {
+          "$ref": "../shared/primitives.schema.json#/$defs/DateTime"
+        },
+        "file_name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "content_type": {
+          "enum": [
+            "image/jpeg",
+            "image/png"
+          ]
+        },
+        "content_base64": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "receipt-upload.response": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "receipt-upload.response",
+      "x-typescript-name": "ReceiptUploadResponse",
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "state",
+            "event_id",
+            "evidence_uri",
+            "extraction"
+          ],
+          "properties": {
+            "state": {
+              "const": "ready_for_review"
+            },
+            "event_id": {
+              "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+            },
+            "evidence_uri": {
+              "type": "string",
+              "minLength": 1
+            },
+            "extraction": {
+              "$ref": "receipt-extraction"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "state",
+            "event_id",
+            "evidence_uri",
+            "extraction",
+            "clarifications"
+          ],
+          "properties": {
+            "state": {
+              "const": "clarification_required"
+            },
+            "event_id": {
+              "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+            },
+            "evidence_uri": {
+              "type": "string",
+              "minLength": 1
+            },
+            "extraction": {
+              "$ref": "receipt-extraction"
+            },
+            "clarifications": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "$ref": "../shared/primitives.schema.json#/$defs/Ambiguity"
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "state",
+            "event_id",
+            "evidence_uri",
+            "reason"
+          ],
+          "properties": {
+            "state": {
+              "const": "review_required"
+            },
+            "event_id": {
+              "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+            },
+            "evidence_uri": {
+              "type": "string",
+              "minLength": 1
+            },
+            "reason": {
+              "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+            },
+            "extraction": {
+              "$ref": "receipt-extraction"
+            },
+            "errors": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "clarifications": {
+              "type": "array",
+              "items": {
+                "$ref": "../shared/primitives.schema.json#/$defs/Ambiguity"
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "state",
+            "event_id",
+            "reason"
+          ],
+          "properties": {
+            "state": {
+              "const": "rejected"
+            },
+            "event_id": {
+              "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+            },
+            "evidence_uri": {
+              "type": "string"
+            },
+            "reason": {
+              "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+            },
+            "mismatch_rm": {
+              "$ref": "../shared/primitives.schema.json#/$defs/NonNegativeMyrAmount"
+            },
+            "errors": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "sales.request": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "sales.request",
+      "x-typescript-name": "SalesRequest",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "merchant_id",
+        "occurred_at",
+        "source",
+        "source_language",
+        "lines",
+        "evidence"
+      ],
+      "properties": {
+        "merchant_id": {
+          "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+        },
+        "occurred_at": {
+          "$ref": "../shared/primitives.schema.json#/$defs/DateTime"
+        },
+        "source": {
+          "$ref": "../shared/primitives.schema.json#/$defs/SourceKind"
+        },
+        "source_language": {
+          "$ref": "../shared/primitives.schema.json#/$defs/SourceLanguage"
+        },
+        "lines": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "product_id",
+              "quantity",
+              "unit_price_rm"
+            ],
+            "properties": {
+              "product_id": {
+                "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+              },
+              "quantity": {
+                "$ref": "../shared/primitives.schema.json#/$defs/PositiveDecimalString"
+              },
+              "unit_price_rm": {
+                "$ref": "../shared/primitives.schema.json#/$defs/NonNegativeMyrAmount"
+              }
+            }
+          }
+        },
+        "evidence": {
+          "$ref": "../shared/primitives.schema.json#/$defs/Evidence"
+        }
+      }
+    },
+    "sales.response": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "sales.response",
+      "x-typescript-name": "SalesResponse",
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "state",
+            "event_id"
+          ],
+          "properties": {
+            "state": {
+              "const": "committed"
+            },
+            "event_id": {
+              "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "state",
+            "clarifications"
+          ],
+          "properties": {
+            "state": {
+              "const": "clarification_required"
+            },
+            "clarifications": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "$ref": "../shared/primitives.schema.json#/$defs/Ambiguity"
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "state",
+            "errors"
+          ],
+          "properties": {
+            "state": {
+              "const": "rejected"
+            },
+            "errors": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "$ref": "../shared/primitives.schema.json#/$defs/ContractError"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "shared.primitives": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "shared.primitives",
+      "title": "PasarAI v1 shared primitives",
+      "$defs": {
+        "Identifier": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+        },
+        "DecimalString": {
+          "type": "string",
+          "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+        },
+        "NonNegativeDecimalString": {
+          "type": "string",
+          "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+        },
+        "PositiveDecimalString": {
+          "type": "string",
+          "pattern": "^(0\\.(0*[1-9][0-9]*)|[1-9][0-9]*(\\.[0-9]+)?)$"
+        },
+        "MyrAmount": {
+          "type": "string",
+          "pattern": "^-?(0|[1-9][0-9]*)\\.[0-9]{2}$"
+        },
+        "NonNegativeMyrAmount": {
+          "type": "string",
+          "pattern": "^(0|[1-9][0-9]*)\\.[0-9]{2}$"
+        },
+        "Confidence": {
+          "type": "string",
+          "pattern": "^(0(\\.[0-9]+)?|1(\\.0+)?)$"
+        },
+        "Date": {
+          "type": "string",
+          "format": "date"
+        },
+        "DateTime": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "SourceLanguage": {
+          "type": "string",
+          "minLength": 2,
+          "pattern": "^[a-z]{2}(-[a-z]{2})*$"
+        },
+        "SourceKind": {
+          "type": "string",
+          "enum": [
+            "voice_agent",
+            "telegram_text",
+            "telegram_voice",
+            "telegram_photo",
+            "web_upload",
+            "web_manual",
+            "text_reply",
+            "receipt_extractor",
+            "api"
+          ]
+        },
+        "PurchaseMetadata": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "payment_method"
+          ],
+          "properties": {
+            "payment_method": {
+              "type": "string",
+              "enum": [
+                "cash",
+                "card",
+                "bank_transfer",
+                "other"
+              ]
+            },
+            "purchase_location": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "note": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "minLength": 1,
+              "maxLength": 500
+            },
+            "tags": {
+              "type": "array",
+              "maxItems": 20,
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 50
+              }
+            },
+            "external_reference": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "minLength": 1,
+              "maxLength": 200
+            }
+          }
+        },
+        "ResponseState": {
+          "type": "string",
+          "enum": [
+            "committed",
+            "clarification_required",
+            "rejected"
+          ]
+        },
+        "Evidence": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "transcript": {
+              "type": "string",
+              "minLength": 1
+            },
+            "external_message_id": {
+              "$ref": "#/$defs/Identifier"
+            },
+            "receipt_id": {
+              "$ref": "#/$defs/Identifier"
+            },
+            "asset_uri": {
+              "type": "string",
+              "minLength": 1
+            },
+            "source_event_id": {
+              "$ref": "#/$defs/Identifier"
+            }
+          },
+          "anyOf": [
+            {
+              "required": [
+                "transcript"
+              ]
+            },
+            {
+              "required": [
+                "external_message_id"
+              ]
+            },
+            {
+              "required": [
+                "receipt_id"
+              ]
+            },
+            {
+              "required": [
+                "asset_uri"
+              ]
+            },
+            {
+              "required": [
+                "source_event_id"
+              ]
+            }
+          ]
+        },
+        "Ambiguity": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "field",
+            "question",
+            "options"
+          ],
+          "properties": {
+            "field": {
+              "type": "string",
+              "minLength": 1
+            },
+            "question": {
+              "type": "string",
+              "minLength": 1
+            },
+            "options": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "ContractError": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "code",
+            "message"
+          ],
+          "properties": {
+            "code": {
+              "$ref": "#/$defs/Identifier"
+            },
+            "message": {
+              "type": "string",
+              "minLength": 1
+            },
+            "field": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "price-simulation.request": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "price-simulation.request",
+      "x-typescript-name": "PriceSimulationRequest",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "merchant_id",
+        "product_id",
+        "quantity",
+        "proposed_unit_price_rm",
+        "as_of"
+      ],
+      "properties": {
+        "merchant_id": {
+          "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+        },
+        "product_id": {
+          "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+        },
+        "quantity": {
+          "$ref": "../shared/primitives.schema.json#/$defs/NonNegativeDecimalString"
+        },
+        "proposed_unit_price_rm": {
+          "$ref": "../shared/primitives.schema.json#/$defs/NonNegativeMyrAmount"
+        },
+        "as_of": {
+          "$ref": "../shared/primitives.schema.json#/$defs/Date"
+        }
+      }
+    },
+    "price-simulation.response": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "price-simulation.response",
+      "x-typescript-name": "PriceSimulationResponse",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "revenue_rm",
+        "cogs_rm",
+        "gross_profit_rm",
+        "gross_margin_pct",
+        "assumption"
+      ],
+      "properties": {
+        "revenue_rm": {
+          "$ref": "../shared/primitives.schema.json#/$defs/MyrAmount"
+        },
+        "cogs_rm": {
+          "$ref": "../shared/primitives.schema.json#/$defs/MyrAmount"
+        },
+        "gross_profit_rm": {
+          "$ref": "../shared/primitives.schema.json#/$defs/MyrAmount"
+        },
+        "gross_margin_pct": {
+          "$ref": "../shared/primitives.schema.json#/$defs/DecimalString"
+        },
+        "incremental_gross_profit_vs_today_rm": {
+          "$ref": "../shared/primitives.schema.json#/$defs/MyrAmount"
+        },
+        "assumption": {
+          "const": "constant_demand"
+        }
+      }
+    },
+    "price-volume-scenario.request": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "price-volume-scenario.request",
+      "x-typescript-name": "PriceVolumeScenarioRequest",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "merchant_id",
+        "product_id",
+        "as_of",
+        "center_price_rm",
+        "center_quantity",
+        "price_step_pct",
+        "quantity_step_pct"
+      ],
+      "properties": {
+        "merchant_id": {
+          "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+        },
+        "product_id": {
+          "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+        },
+        "as_of": {
+          "$ref": "../shared/primitives.schema.json#/$defs/Date"
+        },
+        "center_price_rm": {
+          "$ref": "../shared/primitives.schema.json#/$defs/NonNegativeMyrAmount"
+        },
+        "center_quantity": {
+          "$ref": "../shared/primitives.schema.json#/$defs/NonNegativeDecimalString"
+        },
+        "price_step_pct": {
+          "$ref": "../shared/primitives.schema.json#/$defs/NonNegativeDecimalString"
+        },
+        "quantity_step_pct": {
+          "$ref": "../shared/primitives.schema.json#/$defs/NonNegativeDecimalString"
+        }
+      }
+    },
+    "price-volume-scenario.response": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "price-volume-scenario.response",
+      "x-typescript-name": "PriceVolumeScenarioResponse",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "merchant_id",
+        "product_id",
+        "as_of",
+        "target_gross_margin_pct",
+        "assumption",
+        "scenarios"
+      ],
+      "properties": {
+        "merchant_id": {
+          "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+        },
+        "product_id": {
+          "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+        },
+        "as_of": {
+          "$ref": "../shared/primitives.schema.json#/$defs/Date"
+        },
+        "target_gross_margin_pct": {
+          "$ref": "../shared/primitives.schema.json#/$defs/DecimalString"
+        },
+        "assumption": {
+          "const": "constant_unit_cogs_and_independent_price_volume_inputs"
+        },
+        "scenarios": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "row",
+              "column",
+              "quantity",
+              "unit_price_rm",
+              "revenue_rm",
+              "cogs_rm",
+              "gross_profit_rm",
+              "gross_margin_pct",
+              "incremental_gross_profit_rm",
+              "target_margin_met"
+            ],
+            "properties": {
+              "row": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "column": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "quantity": {
+                "$ref": "../shared/primitives.schema.json#/$defs/NonNegativeDecimalString"
+              },
+              "unit_price_rm": {
+                "$ref": "../shared/primitives.schema.json#/$defs/NonNegativeMyrAmount"
+              },
+              "revenue_rm": {
+                "$ref": "../shared/primitives.schema.json#/$defs/MyrAmount"
+              },
+              "cogs_rm": {
+                "$ref": "../shared/primitives.schema.json#/$defs/MyrAmount"
+              },
+              "gross_profit_rm": {
+                "$ref": "../shared/primitives.schema.json#/$defs/MyrAmount"
+              },
+              "gross_margin_pct": {
+                "$ref": "../shared/primitives.schema.json#/$defs/DecimalString"
+              },
+              "incremental_gross_profit_rm": {
+                "$ref": "../shared/primitives.schema.json#/$defs/MyrAmount"
+              },
+              "target_margin_met": {
+                "type": "boolean"
+              }
+            }
+          }
+        }
+      }
+    },
+    "daily-summary.response": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "daily-summary.response",
+      "x-typescript-name": "DailySummaryResponse",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "merchant_id",
+        "date",
+        "revenue_rm",
+        "cogs_rm",
+        "gross_profit_rm",
+        "gross_margin_pct",
+        "data_completeness",
+        "top_cost_drivers",
+        "baseline_comparison",
+        "price_floor",
+        "cost_stack",
+        "evidence",
+        "assumptions"
+      ],
+      "properties": {
+        "merchant_id": {
+          "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+        },
+        "date": {
+          "$ref": "../shared/primitives.schema.json#/$defs/Date"
+        },
+        "revenue_rm": {
+          "$ref": "../shared/primitives.schema.json#/$defs/MyrAmount"
+        },
+        "cogs_rm": {
+          "$ref": "../shared/primitives.schema.json#/$defs/MyrAmount"
+        },
+        "gross_profit_rm": {
+          "$ref": "../shared/primitives.schema.json#/$defs/MyrAmount"
+        },
+        "gross_margin_pct": {
+          "$ref": "../shared/primitives.schema.json#/$defs/DecimalString"
+        },
+        "data_completeness": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "state",
+            "missing_inputs"
+          ],
+          "properties": {
+            "state": {
+              "enum": [
+                "complete",
+                "partial"
+              ]
+            },
+            "missing_inputs": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "top_cost_drivers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "name",
+              "contribution_rm_per_pack"
+            ],
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "contribution_rm_per_pack": {
+                "$ref": "../shared/primitives.schema.json#/$defs/MyrAmount"
+              }
+            }
+          }
+        },
+        "baseline_comparison": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "baseline_margin_pct",
+            "margin_change_percentage_points"
+          ],
+          "properties": {
+            "baseline_margin_pct": {
+              "$ref": "../shared/primitives.schema.json#/$defs/DecimalString"
+            },
+            "margin_change_percentage_points": {
+              "$ref": "../shared/primitives.schema.json#/$defs/DecimalString"
+            }
+          }
+        },
+        "price_floor": {
+          "anyOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "target_gross_margin_pct",
+                "price_floor_rm",
+                "assumption"
+              ],
+              "properties": {
+                "target_gross_margin_pct": {
+                  "$ref": "../shared/primitives.schema.json#/$defs/DecimalString"
+                },
+                "price_floor_rm": {
+                  "$ref": "../shared/primitives.schema.json#/$defs/NonNegativeMyrAmount"
+                },
+                "assumption": {
+                  "const": "current_unit_cogs"
+                }
+              }
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "cost_stack": {
+          "anyOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "baseline_unit_cogs_rm",
+                "current_unit_cogs_rm",
+                "components"
+              ],
+              "properties": {
+                "baseline_comparison_date": {
+                  "$ref": "../shared/primitives.schema.json#/$defs/Date",
+                  "description": "Previous calendar day used for the day-over-day cost comparison."
+                },
+                "baseline_effective_date": {
+                  "$ref": "../shared/primitives.schema.json#/$defs/Date",
+                  "description": "Deprecated compatibility alias for baseline_comparison_date."
+                },
+                "baseline_unit_cogs_rm": {
+                  "$ref": "../shared/primitives.schema.json#/$defs/NonNegativeMyrAmount"
+                },
+                "current_unit_cogs_rm": {
+                  "$ref": "../shared/primitives.schema.json#/$defs/NonNegativeMyrAmount"
+                },
+                "components": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "component_id",
+                      "name",
+                      "baseline_cost_rm_per_pack",
+                      "current_cost_rm_per_pack",
+                      "change_rm_per_pack",
+                      "evidence_id"
+                    ],
+                    "properties": {
+                      "component_id": {
+                        "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+                      },
+                      "name": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "baseline_cost_rm_per_pack": {
+                        "$ref": "../shared/primitives.schema.json#/$defs/NonNegativeMyrAmount"
+                      },
+                      "current_cost_rm_per_pack": {
+                        "$ref": "../shared/primitives.schema.json#/$defs/NonNegativeMyrAmount"
+                      },
+                      "change_rm_per_pack": {
+                        "$ref": "../shared/primitives.schema.json#/$defs/MyrAmount"
+                      },
+                      "evidence_id": {
+                        "anyOf": [
+                          {
+                            "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "evidence_id",
+              "title",
+              "asset_uri",
+              "receipt_id",
+              "supplier_name",
+              "transcript",
+              "line_items"
+            ],
+            "properties": {
+              "evidence_id": {
+                "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+              },
+              "title": {
+                "type": "string",
+                "minLength": 1
+              },
+              "asset_uri": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "receipt_id": {
+                "anyOf": [
+                  {
+                    "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "supplier_name": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "transcript": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "line_items": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "raw_name",
+                    "component_id",
+                    "total_price_rm",
+                    "confidence"
+                  ],
+                  "properties": {
+                    "raw_name": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "component_id": {
+                      "anyOf": [
+                        {
+                          "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "total_price_rm": {
+                      "anyOf": [
+                        {
+                          "$ref": "../shared/primitives.schema.json#/$defs/NonNegativeMyrAmount"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "confidence": {
+                      "anyOf": [
+                        {
+                          "$ref": "../shared/primitives.schema.json#/$defs/Confidence"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "assumptions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

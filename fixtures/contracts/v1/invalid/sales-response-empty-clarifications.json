@@ -1,0 +1,9 @@
+{
+  "synthetic": true,
+  "expected_failure": "clarification_required response requires non-empty clarifications",
+  "schema_id": "sales.response",
+  "payload": {
+    "state": "clarification_required",
+    "clarifications": []
+  }
+}

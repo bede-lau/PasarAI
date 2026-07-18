@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "receipt-extraction",
+  "x-typescript-name": "ReceiptExtraction",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["receipt_id", "supplier_name", "date", "currency", "line_items", "total_rm", "overall_confidence", "ambiguities"],
+  "properties": {
+    "receipt_id": {
+      "anyOf": [
+        { "$ref": "../shared/primitives.schema.json#/$defs/Identifier" },
+        { "type": "null" }
+      ]
+    },
+    "supplier_name": { "type": ["string", "null"] },
+    "date": {
+      "anyOf": [
+        { "$ref": "../shared/primitives.schema.json#/$defs/Date" },
+        { "type": "null" }
+      ]
+    },
+    "currency": { "const": "MYR" },
+    "line_items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["raw_name", "normalized_component_id", "quantity", "uom", "pack_size", "unit_price_rm", "total_price_rm", "confidence"],
+        "properties": {
+          "raw_name": { "type": "string", "minLength": 1 },
+          "normalized_component_id": {
+            "anyOf": [
+              { "$ref": "../shared/primitives.schema.json#/$defs/Identifier" },
+              { "type": "null" }
+            ]
+          },
+          "quantity": {
+            "anyOf": [
+              { "$ref": "../shared/primitives.schema.json#/$defs/NonNegativeDecimalString" },
+              { "type": "null" }
+            ]
+          },
+          "uom": { "type": ["string", "null"] },
+          "pack_size": {
+            "anyOf": [
+              { "$ref": "../shared/primitives.schema.json#/$defs/NonNegativeDecimalString" },
+              { "type": "null" }
+            ]
+          },
+          "unit_price_rm": {
+            "anyOf": [
+              { "$ref": "../shared/primitives.schema.json#/$defs/NonNegativeMyrAmount" },
+              { "type": "null" }
+            ]
+          },
+          "total_price_rm": {
+            "anyOf": [
+              { "$ref": "../shared/primitives.schema.json#/$defs/NonNegativeMyrAmount" },
+              { "type": "null" }
+            ]
+          },
+          "confidence": { "$ref": "../shared/primitives.schema.json#/$defs/Confidence" }
+        }
+      }
+    },
+    "total_rm": {
+      "anyOf": [
+        { "$ref": "../shared/primitives.schema.json#/$defs/NonNegativeMyrAmount" },
+        { "type": "null" }
+      ]
+    },
+    "overall_confidence": { "$ref": "../shared/primitives.schema.json#/$defs/Confidence" },
+    "ambiguities": {
+      "type": "array",
+      "items": { "$ref": "../shared/primitives.schema.json#/$defs/Ambiguity" }
+    }
+  }
+}

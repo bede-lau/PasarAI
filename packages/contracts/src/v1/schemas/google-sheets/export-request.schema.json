@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "google-sheets-export.request",
+  "x-typescript-name": "GoogleSheetsExportRequest",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "dates": {
+      "type": "array",
+      "maxItems": 366,
+      "items": {
+        "$ref": "../shared/primitives.schema.json#/$defs/Date"
+      }
+    }
+  }
+}

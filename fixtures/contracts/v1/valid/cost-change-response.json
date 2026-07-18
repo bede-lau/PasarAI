@@ -1,0 +1,16 @@
+{
+  "synthetic": true,
+  "source": "PasarAI_Handoff_Package/demo_data/seed_data/today_events.json",
+  "schema_id": "cost-changes.response",
+  "payload": {
+    "state": "clarification_required",
+    "clarification_source": "message:evt_voice_001",
+    "clarifications": [
+      {
+        "field": "pack_size",
+        "question": "Bekas Makanan increase RM2.00 applies to how many base units?",
+        "options": ["50", "100", "other"]
+      }
+    ]
+  }
+}

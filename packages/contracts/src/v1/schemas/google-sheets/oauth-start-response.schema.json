@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "google-sheets-oauth-start.response",
+  "x-typescript-name": "GoogleSheetsOAuthStartResponse",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["authorization_url", "state", "expires_at"],
+  "properties": {
+    "authorization_url": {
+      "type": "string",
+      "format": "uri"
+    },
+    "state": {
+      "type": "string",
+      "minLength": 32
+    },
+    "expires_at": {
+      "$ref": "../shared/primitives.schema.json#/$defs/DateTime"
+    }
+  }
+}

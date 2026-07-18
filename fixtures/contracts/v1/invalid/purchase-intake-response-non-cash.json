@@ -1,0 +1,25 @@
+{
+  "synthetic": true,
+  "source": "PasarAI cash purchase feature fixture",
+  "expected_failure": "Purchase intake summaries can only report cash",
+  "schema_id": "purchase-intake-upsert.response",
+  "payload": {
+    "state": "ready_for_confirmation",
+    "intake_id": "purchase_intake_001",
+    "version": 1,
+    "missing_fields": [],
+    "confirmation_token": "confirmation_001",
+    "summary": {
+      "supplier_name": "Pasar Pagi",
+      "component_id": "c_egg",
+      "item_name": "Eggs",
+      "quantity": "2",
+      "uom": "tray",
+      "pack_size": "30",
+      "total_price_rm": "24.00",
+      "occurred_at": "2026-07-16T08:00:00.000Z",
+      "payment_method": "card",
+      "note": null
+    }
+  }
+}

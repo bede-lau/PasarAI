@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "google-sheets-disconnect.response",
+  "x-typescript-name": "GoogleSheetsDisconnectResponse",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["state"],
+  "properties": {
+    "state": {
+      "const": "disconnected"
+    }
+  }
+}

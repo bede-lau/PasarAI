@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "analytics-day-status.request",
+  "x-typescript-name": "AnalyticsDayStatusRequest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "merchant_id",
+    "product_id",
+    "date",
+    "occurred_at",
+    "business_day_state",
+    "sold_out_state"
+  ],
+  "properties": {
+    "merchant_id": {
+      "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+    },
+    "product_id": {
+      "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+    },
+    "date": {
+      "$ref": "../shared/primitives.schema.json#/$defs/Date"
+    },
+    "occurred_at": {
+      "$ref": "../shared/primitives.schema.json#/$defs/DateTime"
+    },
+    "business_day_state": {
+      "enum": [
+        "closed_complete",
+        "closed_no_sales"
+      ]
+    },
+    "sold_out_state": {
+      "enum": [
+        "yes",
+        "no",
+        "unknown"
+      ]
+    }
+  }
+}

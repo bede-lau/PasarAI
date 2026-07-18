@@ -1,0 +1,7 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "google-sheets-disconnect.request",
+  "x-typescript-name": "GoogleSheetsDisconnectRequest",
+  "type": "object",
+  "additionalProperties": false
+}

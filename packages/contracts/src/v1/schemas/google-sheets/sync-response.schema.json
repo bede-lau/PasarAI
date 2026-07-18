@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "google-sheets-sync.response",
+  "x-typescript-name": "GoogleSheetsSyncResponse",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "state",
+    "job_id",
+    "operation",
+    "rows_processed",
+    "errors",
+    "spreadsheet_url",
+    "completed_at"
+  ],
+  "properties": {
+    "state": {
+      "const": "completed"
+    },
+    "job_id": {
+      "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+    },
+    "operation": {
+      "type": "string",
+      "enum": ["export", "import", "reconcile"]
+    },
+    "rows_processed": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "errors": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "spreadsheet_url": {
+      "type": "string",
+      "format": "uri"
+    },
+    "completed_at": {
+      "$ref": "../shared/primitives.schema.json#/$defs/DateTime"
+    }
+  }
+}

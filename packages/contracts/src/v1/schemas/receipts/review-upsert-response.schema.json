@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "receipt-review-upsert.response",
+  "x-typescript-name": "ReceiptReviewUpsertResponse",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "state",
+    "receipt_event_id",
+    "review_event_id",
+    "version"
+  ],
+  "properties": {
+    "state": {
+      "type": "string",
+      "enum": ["saved", "archived"]
+    },
+    "receipt_event_id": {
+      "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+    },
+    "review_event_id": {
+      "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1
+    }
+  }
+}

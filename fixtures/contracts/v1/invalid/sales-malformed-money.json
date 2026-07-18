@@ -1,0 +1,17 @@
+{
+  "synthetic": true,
+  "expected_failure": "MYR money strings require exactly two decimal places",
+  "schema_id": "sales.request",
+  "payload": {
+    "merchant_id": "m_kak_lina_001",
+    "occurred_at": "2026-07-12T14:30:00+08:00",
+    "source": "voice_agent",
+    "source_language": "ms-en",
+    "lines": [{
+      "product_id": "p_nlb_001",
+      "quantity": "40",
+      "unit_price_rm": "5.0"
+    }],
+    "evidence": { "source_event_id": "evt_voice_001" }
+  }
+}

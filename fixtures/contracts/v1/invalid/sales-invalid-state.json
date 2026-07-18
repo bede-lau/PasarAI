@@ -1,0 +1,9 @@
+{
+  "synthetic": true,
+  "expected_failure": "response state must be one of the locked states",
+  "schema_id": "sales.response",
+  "payload": {
+    "state": "saved",
+    "event_id": "evt_sales_001"
+  }
+}

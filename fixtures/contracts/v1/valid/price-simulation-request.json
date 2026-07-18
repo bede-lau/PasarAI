@@ -1,0 +1,12 @@
+{
+  "synthetic": true,
+  "source": "PasarAI architecture price simulation example",
+  "schema_id": "price-simulation.request",
+  "payload": {
+    "merchant_id": "m_kak_lina_001",
+    "product_id": "p_nlb_001",
+    "quantity": "35",
+    "proposed_unit_price_rm": "5.50",
+    "as_of": "2026-07-12"
+  }
+}

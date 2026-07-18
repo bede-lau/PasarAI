@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "receipt-upload.request",
+  "x-typescript-name": "ReceiptUploadRequest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["merchant_id", "occurred_at", "file_name", "content_type", "content_base64"],
+  "properties": {
+    "merchant_id": { "$ref": "../shared/primitives.schema.json#/$defs/Identifier" },
+    "occurred_at": { "$ref": "../shared/primitives.schema.json#/$defs/DateTime" },
+    "file_name": { "type": "string", "minLength": 1 },
+    "content_type": { "enum": ["image/jpeg", "image/png"] },
+    "content_base64": { "type": "string", "minLength": 1 }
+  }
+}

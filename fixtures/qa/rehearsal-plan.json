@@ -1,0 +1,69 @@
+{
+  "version": "1",
+  "total_seconds": 120,
+  "stages": [
+    {
+      "id": "problem",
+      "duration_seconds": 10,
+      "operator_action": "Show the paper receipt and state that the vendor lacks a current margin view.",
+      "success_signal": "Audience sees the source evidence before any calculated result."
+    },
+    {
+      "id": "receipt",
+      "duration_seconds": 25,
+      "operator_action": "Upload receipt 001 and confirm the three extracted cost lines.",
+      "success_signal": "Receipt is ready for review with evidence retained."
+    },
+    {
+      "id": "voice_and_clarification",
+      "duration_seconds": 20,
+      "operator_action": "Perform VN-01 and answer the denominator question with VN-02.",
+      "success_signal": "Sales commit once; packaging remains unchanged until the answer, then moves to RM0.20 once."
+    },
+    {
+      "id": "dashboard",
+      "duration_seconds": 20,
+      "operator_action": "Reveal the dashboard margin and four cost drivers.",
+      "success_signal": "RM200.00 revenue, RM72.80 gross profit, 36.40% margin, and a 5.60 point decline are visible."
+    },
+    {
+      "id": "mandarin_simulation",
+      "duration_seconds": 25,
+      "operator_action": "Perform VN-04 in Mandarin.",
+      "success_signal": "The read-only answer states RM192.50 revenue, RM81.20 gross profit, and 42.18% margin with assumptions."
+    },
+    {
+      "id": "close",
+      "duration_seconds": 20,
+      "operator_action": "Open source evidence and close with Cakap. Snap. Tahu untung.",
+      "success_signal": "The audience sees the trace from source evidence to the three dashboard cards."
+    }
+  ],
+  "recovery": [
+    {
+      "failure": "receipt_provider_unavailable",
+      "action": "Use receipt 002 in the manually verified review screen.",
+      "disclosure": "State that the receipt is being reviewed from preserved evidence and was not read live."
+    },
+    {
+      "failure": "databricks_quota_or_compute_unavailable",
+      "action": "Show the last materialized Gold snapshot.",
+      "disclosure": "State that the snapshot is previously processed demo state."
+    },
+    {
+      "failure": "speech_or_microphone_failure",
+      "action": "Paste the matching text fixture.",
+      "disclosure": "State that text input is being used; do not claim a live transcript."
+    },
+    {
+      "failure": "api_or_dashboard_failure",
+      "action": "Show the visible error or quota state and the prerecorded recovery capture.",
+      "disclosure": "Do not present cached or fixture output as a live success."
+    },
+    {
+      "failure": "golden_metric_mismatch",
+      "action": "Stop the financial walkthrough and open expected_metrics.json.",
+      "disclosure": "Do not alter expected values or improvise replacement numbers."
+    }
+  ]
+}

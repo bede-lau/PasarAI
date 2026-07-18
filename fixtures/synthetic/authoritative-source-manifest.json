@@ -1,0 +1,47 @@
+{
+  "version": "1",
+  "authoritative_source_directory": "PasarAI_Handoff_Package/demo_data/seed_data",
+  "disclaimer": "Committed audit metadata for the synthetic local-only source snapshot.",
+  "files": [
+    {
+      "name": "expected_metrics.json",
+      "sha256": "b9633bd1a4317bb337079f6b0684c1c253c11a108e87cdb6ba0ca48b8d759b39",
+      "size_bytes": 1083
+    },
+    {
+      "name": "ingredient_price_history.csv",
+      "sha256": "d3f0f003b409179ba337e559c9aaf944756d87d1e915d4cd84ec009c502a83a1",
+      "size_bytes": 519
+    },
+    {
+      "name": "merchant.json",
+      "sha256": "ee3dc2d33ee98ea74d37b979c14dfad37c28e348467c61430e0b0d99a12437f3",
+      "size_bytes": 311
+    },
+    {
+      "name": "products.csv",
+      "sha256": "144f9c9f9fe0bf1990b7277cd9c3d669c6be164f53f72261cbe53ae656ea0549",
+      "size_bytes": 202
+    },
+    {
+      "name": "receipt_ground_truth.json",
+      "sha256": "e545f59d11ad4958b09fa1395a59907622ee8396804d02203e302ce460fdab8c",
+      "size_bytes": 2917
+    },
+    {
+      "name": "recipe_components.csv",
+      "sha256": "6a631eaaa2a6dd11156e90c9a09f1d4cb58d887f19804f8e8b10391ee3c0e15b",
+      "size_bytes": 508
+    },
+    {
+      "name": "sales_history.csv",
+      "sha256": "ba105c1f58f43a7a412fe88b0dcbebf82b08eef57e0450b062cf72283d6a8f1b",
+      "size_bytes": 706
+    },
+    {
+      "name": "today_events.json",
+      "sha256": "2d9d20a277bde6260a37dd62539a77e6186f41f8070229edfb61e1099414f3e0",
+      "size_bytes": 1056
+    }
+  ]
+}

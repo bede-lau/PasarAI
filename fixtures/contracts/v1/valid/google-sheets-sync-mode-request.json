@@ -1,0 +1,7 @@
+{
+  "synthetic": true,
+  "schema_id": "google-sheets-sync-mode.request",
+  "payload": {
+    "sync_mode": "automatic"
+  }
+}

@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "purchase-intake-upsert.response",
+  "x-typescript-name": "PurchaseIntakeUpsertResponse",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "state",
+    "intake_id",
+    "version",
+    "missing_fields",
+    "confirmation_token",
+    "summary"
+  ],
+  "properties": {
+    "state": {
+      "type": "string",
+      "enum": ["clarification_required", "ready_for_confirmation"]
+    },
+    "intake_id": {
+      "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "missing_fields": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "enum": [
+          "supplier_name",
+          "item.component_id",
+          "item.quantity",
+          "item.uom",
+          "item.pack_size",
+          "item.total_price_rm"
+        ]
+      }
+    },
+    "confirmation_token": {
+      "anyOf": [
+        {
+          "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "supplier_name",
+        "component_id",
+        "item_name",
+        "quantity",
+        "uom",
+        "pack_size",
+        "total_price_rm",
+        "occurred_at",
+        "payment_method",
+        "note"
+      ],
+      "properties": {
+        "supplier_name": { "type": ["string", "null"] },
+        "component_id": { "type": ["string", "null"] },
+        "item_name": { "type": ["string", "null"] },
+        "quantity": { "type": ["string", "null"] },
+        "uom": { "type": ["string", "null"] },
+        "pack_size": { "type": ["string", "null"] },
+        "total_price_rm": { "type": ["string", "null"] },
+        "occurred_at": {
+          "$ref": "../shared/primitives.schema.json#/$defs/DateTime"
+        },
+        "payment_method": {
+          "const": "cash"
+        },
+        "note": { "type": ["string", "null"] }
+      }
+    }
+  }
+}

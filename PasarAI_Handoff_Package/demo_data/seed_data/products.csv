@@ -1,0 +1,4 @@
+product_id,merchant_id,name,selling_price_rm,active
+p_nlb_001,m_kak_lina_001,Nasi Lemak Biasa,5.0,True
+p_nla_001,m_kak_lina_001,Nasi Lemak Ayam,8.5,True
+p_tehais_001,m_kak_lina_001,Teh Ais,2.5,True

@@ -1,0 +1,14 @@
+{
+  "synthetic": true,
+  "expected_failure": "committed response rejects clarification fields",
+  "schema_id": "sales.response",
+  "payload": {
+    "state": "committed",
+    "event_id": "evt_sales_001",
+    "clarifications": [{
+      "field": "lines[0].quantity",
+      "question": "Confirm quantity",
+      "options": ["40"]
+    }]
+  }
+}

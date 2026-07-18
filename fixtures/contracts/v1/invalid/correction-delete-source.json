@@ -1,0 +1,20 @@
+{
+  "synthetic": true,
+  "expected_failure": "corrections are append-only and cannot request source deletion",
+  "schema_id": "corrections.request",
+  "payload": {
+    "merchant_id": "m_kak_lina_001",
+    "target_event_id": "evt_voice_001",
+    "occurred_at": "2026-07-12T14:31:00+08:00",
+    "reason": "Replace the clarification",
+    "replacement_payload": {
+      "changes": [{
+        "kind": "decimal",
+        "field": "pack_size",
+        "corrected_value": "50"
+      }]
+    },
+    "evidence": { "source_event_id": "evt_clarify_001" },
+    "delete_source_event": true
+  }
+}

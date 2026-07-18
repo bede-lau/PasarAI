@@ -1,0 +1,20 @@
+{
+  "synthetic": true,
+  "expected_failure": "monetary corrections require two-decimal MYR strings",
+  "schema_id": "corrections.request",
+  "payload": {
+    "merchant_id": "m_kak_lina_001",
+    "target_event_id": "evt_voice_001",
+    "occurred_at": "2026-07-12T14:31:00+08:00",
+    "reason": "Correct packaging increase",
+    "replacement_payload": {
+      "changes": [{
+        "kind": "money",
+        "field": "pack_price_increase_rm",
+        "previous_value": "2.00",
+        "corrected_value": "2"
+      }]
+    },
+    "evidence": { "source_event_id": "evt_clarify_001" }
+  }
+}

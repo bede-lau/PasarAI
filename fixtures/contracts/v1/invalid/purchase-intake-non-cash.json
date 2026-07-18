@@ -1,0 +1,27 @@
+{
+  "synthetic": true,
+  "source": "PasarAI cash purchase feature fixture",
+  "expected_failure": "Purchase intake accepts cash payments only",
+  "schema_id": "purchase-intake-upsert.request",
+  "payload": {
+    "merchant_id": "m_kak_lina_001",
+    "occurred_at": "2026-07-16T08:00:00.000Z",
+    "source": "web_manual",
+    "source_language": "en",
+    "supplier_name": "Pasar Pagi",
+    "metadata": {
+      "payment_method": "card"
+    },
+    "item": {
+      "component_id": "c_egg",
+      "raw_name": "Eggs",
+      "quantity": "2",
+      "uom": "tray",
+      "pack_size": "30",
+      "total_price_rm": "24.00"
+    },
+    "evidence": {
+      "transcript": "Synthetic non-cash purchase"
+    }
+  }
+}

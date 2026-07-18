@@ -1,0 +1,17 @@
+{
+  "synthetic": true,
+  "source": "append-only correction semantics",
+  "schema_id": "corrections.response",
+  "payload": {
+    "state": "committed",
+    "correction_event_id": "evt_correction_001",
+    "target_event_id": "evt_voice_001",
+    "changes": [
+      {
+        "field": "quantity",
+        "before_value": "40",
+        "after_value": "38"
+      }
+    ]
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "google-sheets-oauth-start.request",
+  "x-typescript-name": "GoogleSheetsOAuthStartRequest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["redirect_uri"],
+  "properties": {
+    "redirect_uri": {
+      "type": "string",
+      "format": "uri"
+    },
+    "spreadsheet_id": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

@@ -1,0 +1,34 @@
+[
+  {
+    "event_id": "evt_receipt_001",
+    "type": "receipt_uploaded",
+    "occurred_at": "2026-07-12T08:10:00+08:00",
+    "source": "web_upload",
+    "receipt_id": "SBR-120726-184",
+    "evidence_path": "../receipts/receipt_001_sinar_borong.jpg"
+  },
+  {
+    "event_id": "evt_receipt_002",
+    "type": "receipt_uploaded",
+    "occurred_at": "2026-07-12T08:14:00+08:00",
+    "source": "telegram_photo",
+    "receipt_id": "PPT-260712-077",
+    "evidence_path": "../receipts/receipt_002_packpro.jpg"
+  },
+  {
+    "event_id": "evt_voice_001",
+    "type": "sales_report",
+    "occurred_at": "2026-07-12T14:30:00+08:00",
+    "source": "voice_agent",
+    "language": "ms-en",
+    "transcript": "Hari ni habis forty bungkus nasi lemak biasa, semua five ringgit. Packaging cost naik two ringgit."
+  },
+  {
+    "event_id": "evt_clarify_001",
+    "type": "clarification",
+    "occurred_at": "2026-07-12T14:31:00+08:00",
+    "source": "text_reply",
+    "text": "RM2 naik untuk satu pek 50 bekas, bukan setiap bekas.",
+    "resolves_event_id": "evt_voice_001"
+  }
+]

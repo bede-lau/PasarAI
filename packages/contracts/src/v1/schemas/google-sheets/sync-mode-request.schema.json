@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "google-sheets-sync-mode.request",
+  "x-typescript-name": "GoogleSheetsSyncModeRequest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["sync_mode"],
+  "properties": {
+    "sync_mode": {
+      "type": "string",
+      "enum": ["manual", "automatic"]
+    }
+  }
+}

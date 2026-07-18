@@ -1,0 +1,9 @@
+{
+  "synthetic": true,
+  "source": "architecture response states",
+  "schema_id": "sales.response",
+  "payload": {
+    "state": "committed",
+    "event_id": "evt_sales_001"
+  }
+}

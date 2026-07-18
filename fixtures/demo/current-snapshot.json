@@ -1,0 +1,235 @@
+{
+  "version": "2026-07-16-v1",
+  "dashboard_date": "2026-07-16",
+  "baseline_date": "2026-07-15",
+  "merchant": {
+    "merchant_id": "m_kak_lina_001",
+    "display_name": "Kedai Kak Lina Nasi Lemak",
+    "location": "SS2, Petaling Jaya, Selangor",
+    "timezone": "Asia/Kuala_Lumpur",
+    "currency": "MYR",
+    "primary_language": "ms",
+    "supported_languages": [
+      "ms",
+      "en",
+      "zh"
+    ],
+    "target_gross_margin_pct": "40.00"
+  },
+  "product": {
+    "product_id": "p_nlb_001",
+    "name": "Nasi Lemak Biasa",
+    "selling_price_rm": "5.00",
+    "active": true
+  },
+  "sale": {
+    "event_id": "demo_sale_2026_07_16",
+    "occurred_at": "2026-07-16T14:30:00+08:00",
+    "quantity": "40",
+    "unit_price_rm": "5.00",
+    "source": "demo_reset",
+    "source_language": "en",
+    "transcript": "Today I sold 40 packs of nasi lemak at five ringgit each."
+  },
+  "metrics": {
+    "baseline_unit_cogs_rm": "2.50",
+    "current_unit_cogs_rm": "3.22",
+    "cost_increase_rm": "0.72",
+    "cost_increase_pct": "28.80",
+    "revenue_rm": "200.00",
+    "cogs_rm": "128.80",
+    "gross_profit_rm": "71.20",
+    "gross_margin_pct": "35.60",
+    "baseline_margin_pct": "50.00",
+    "margin_change_percentage_points": "-14.40",
+    "price_floor_rm": "5.37"
+  },
+  "components": [
+    {
+      "component_id": "c_anchovy",
+      "name": "Ikan Bilis",
+      "uom": "kg",
+      "baseline_cost_per_pack_rm": "0.30",
+      "current_cost_per_pack_rm": "0.38",
+      "change_rm_per_pack": "0.08",
+      "evidence_projection": {
+        "evidenceId": "PPSS2-1207",
+        "title": "Pasar Pagi SS2 receipt",
+        "assetUri": "/evidence/receipt_003_pasar_pagi.jpg",
+        "receiptId": "PPSS2-1207",
+        "supplierName": "Pasar Pagi SS2",
+        "transcript": null,
+        "lineItems": [
+          {
+            "rawName": "Ikan bilis 1kg",
+            "componentId": "c_anchovy",
+            "totalPriceRm": "28.50",
+            "confidence": "1.00"
+          }
+        ]
+      }
+    },
+    {
+      "component_id": "c_coconut",
+      "name": "Santan",
+      "uom": "kg",
+      "baseline_cost_per_pack_rm": "0.48",
+      "current_cost_per_pack_rm": "0.61",
+      "change_rm_per_pack": "0.13",
+      "evidence_projection": {
+        "evidenceId": "SBR-120726-184",
+        "title": "Sinar Borong Jaya receipt",
+        "assetUri": "/evidence/receipt_001_sinar_borong.jpg",
+        "receiptId": "SBR-120726-184",
+        "supplierName": "Sinar Borong Jaya",
+        "transcript": null,
+        "lineItems": [
+          {
+            "rawName": "Santan Segar 1kg x 4",
+            "componentId": "c_coconut",
+            "totalPriceRm": "62.00",
+            "confidence": "1.00"
+          }
+        ]
+      }
+    },
+    {
+      "component_id": "c_cucumber",
+      "name": "Timun",
+      "uom": "kg",
+      "baseline_cost_per_pack_rm": "0.08",
+      "current_cost_per_pack_rm": "0.11",
+      "change_rm_per_pack": "0.03",
+      "evidence_projection": {
+        "evidenceId": "PPSS2-1207",
+        "title": "Pasar Pagi SS2 receipt",
+        "assetUri": "/evidence/receipt_003_pasar_pagi.jpg",
+        "receiptId": "PPSS2-1207",
+        "supplierName": "Pasar Pagi SS2",
+        "transcript": null,
+        "lineItems": [
+          {
+            "rawName": "Timun 3kg",
+            "componentId": "c_cucumber",
+            "totalPriceRm": "12.00",
+            "confidence": "1.00"
+          }
+        ]
+      }
+    },
+    {
+      "component_id": "c_egg",
+      "name": "Telur",
+      "uom": "unit",
+      "baseline_cost_per_pack_rm": "0.42",
+      "current_cost_per_pack_rm": "0.55",
+      "change_rm_per_pack": "0.13",
+      "evidence_projection": {
+        "evidenceId": "SBR-120726-184",
+        "title": "Sinar Borong Jaya receipt",
+        "assetUri": "/evidence/receipt_001_sinar_borong.jpg",
+        "receiptId": "SBR-120726-184",
+        "supplierName": "Sinar Borong Jaya",
+        "transcript": null,
+        "lineItems": [
+          {
+            "rawName": "Telur Gred B 30 biji x 3 tray",
+            "componentId": "c_egg",
+            "totalPriceRm": "49.50",
+            "confidence": "1.00"
+          }
+        ]
+      }
+    },
+    {
+      "component_id": "c_fuel",
+      "name": "Gas + Condiments",
+      "uom": "allocation",
+      "baseline_cost_per_pack_rm": "0.20",
+      "current_cost_per_pack_rm": "0.25",
+      "change_rm_per_pack": "0.05",
+      "evidence_projection": null
+    },
+    {
+      "component_id": "c_packaging",
+      "name": "Bekas Makanan",
+      "uom": "unit",
+      "baseline_cost_per_pack_rm": "0.16",
+      "current_cost_per_pack_rm": "0.24",
+      "change_rm_per_pack": "0.08",
+      "evidence_projection": {
+        "evidenceId": "demo-packaging-update",
+        "title": "Packaging cost update",
+        "assetUri": null,
+        "receiptId": null,
+        "supplierName": null,
+        "transcript": "The cost of food containers increased by two ringgit for a pack of 50 containers.",
+        "lineItems": [
+          {
+            "rawName": "Bekas Makanan 50 pcs",
+            "componentId": "c_packaging",
+            "totalPriceRm": "12.00",
+            "confidence": "1.00"
+          }
+        ]
+      }
+    },
+    {
+      "component_id": "c_peanut",
+      "name": "Kacang Tanah",
+      "uom": "kg",
+      "baseline_cost_per_pack_rm": "0.11",
+      "current_cost_per_pack_rm": "0.15",
+      "change_rm_per_pack": "0.04",
+      "evidence_projection": {
+        "evidenceId": "PPSS2-1207",
+        "title": "Pasar Pagi SS2 receipt",
+        "assetUri": "/evidence/receipt_003_pasar_pagi.jpg",
+        "receiptId": "PPSS2-1207",
+        "supplierName": "Pasar Pagi SS2",
+        "transcript": null,
+        "lineItems": [
+          {
+            "rawName": "Kacang 2kg",
+            "componentId": "c_peanut",
+            "totalPriceRm": "24.00",
+            "confidence": "1.00"
+          }
+        ]
+      }
+    },
+    {
+      "component_id": "c_rice",
+      "name": "Beras",
+      "uom": "kg",
+      "baseline_cost_per_pack_rm": "0.32",
+      "current_cost_per_pack_rm": "0.38",
+      "change_rm_per_pack": "0.06",
+      "evidence_projection": null
+    },
+    {
+      "component_id": "c_sambal",
+      "name": "Sambal + Minyak",
+      "uom": "batch_share",
+      "baseline_cost_per_pack_rm": "0.43",
+      "current_cost_per_pack_rm": "0.55",
+      "change_rm_per_pack": "0.12",
+      "evidence_projection": {
+        "evidenceId": "SBR-120726-184",
+        "title": "Sinar Borong Jaya receipt",
+        "assetUri": "/evidence/receipt_001_sinar_borong.jpg",
+        "receiptId": "SBR-120726-184",
+        "supplierName": "Sinar Borong Jaya",
+        "transcript": null,
+        "lineItems": [
+          {
+            "rawName": "Minyak Masak 5kg x 1",
+            "componentId": "c_sambal",
+            "totalPriceRm": "32.00",
+            "confidence": "1.00"
+          }
+        ]
+      }
+    }
+  ]
+}

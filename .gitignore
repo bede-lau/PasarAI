@@ -1,0 +1,47 @@
+# Dependencies and package-manager state
+node_modules/
+.pnpm-store/
+
+# Environment files and local credentials
+.env
+.env.*
+!.env.example
+!**/.env.example
+
+# Build, test, and tooling output
+.next/
+dist/
+build/
+coverage/
+*.tsbuildinfo
+*.log
+.tmp/
+.pasarai-evidence/
+screenshots/
+*.inspect.ndjson
+
+# Python-generated files
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Local agent/runtime state
+.claude/
+.omc/
+.omx/
+
+# Editor and operating-system files
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/
+*.swp
+~$*
+
+# Original handoff instructions retained outside repository history
+PasarAI_Handoff_Package/agent_prompts/
+PasarAI_Handoff_Package/PasarAI_Architecture_and_Contracts.md
+PasarAI_Handoff_Package/PasarAI_PRD_v1.0.md
+PasarAI_Handoff_Package/README.md

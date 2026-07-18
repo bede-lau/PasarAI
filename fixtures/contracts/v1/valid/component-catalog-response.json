@@ -1,0 +1,14 @@
+{
+  "synthetic": true,
+  "source": "PasarAI cash purchase feature fixture",
+  "schema_id": "component-catalog.response",
+  "payload": {
+    "merchant_id": "m_kak_lina_001",
+    "components": [
+      {
+        "component_id": "c_egg",
+        "name": "Telur"
+      }
+    ]
+  }
+}

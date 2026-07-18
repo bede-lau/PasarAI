@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "component-catalog.response",
+  "x-typescript-name": "ComponentCatalogResponse",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["merchant_id", "components"],
+  "properties": {
+    "merchant_id": {
+      "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+    },
+    "components": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["component_id", "name"],
+        "properties": {
+          "component_id": {
+            "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    }
+  }
+}

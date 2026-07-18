@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "analytics-activity.response",
+  "x-typescript-name": "AnalyticsActivityResponse",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "merchant_id",
+    "product_id",
+    "from",
+    "to",
+    "items"
+  ],
+  "properties": {
+    "merchant_id": {
+      "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+    },
+    "product_id": {
+      "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+    },
+    "from": {
+      "$ref": "../shared/primitives.schema.json#/$defs/Date"
+    },
+    "to": {
+      "$ref": "../shared/primitives.schema.json#/$defs/Date"
+    },
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "event_id",
+          "occurred_at",
+          "source",
+          "type",
+          "state",
+          "title",
+          "evidence_uri",
+          "target_event_id"
+        ],
+        "properties": {
+          "event_id": {
+            "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+          },
+          "occurred_at": {
+            "$ref": "../shared/primitives.schema.json#/$defs/DateTime"
+          },
+          "source": {
+            "type": "string",
+            "minLength": 1
+          },
+          "type": {
+            "type": "string",
+            "minLength": 1
+          },
+          "state": {
+            "enum": [
+              "committed",
+              "clarification_required",
+              "rejected",
+              "recorded"
+            ]
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1
+          },
+          "evidence_uri": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "target_event_id": {
+            "anyOf": [
+              {
+                "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      }
+    }
+  }
+}

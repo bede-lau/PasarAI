@@ -1,0 +1,7 @@
+effective_date,component_id,supplier,purchase_description,purchase_qty,purchase_uom,total_rm
+2026-06-28,c_egg,Sinar Borong Jaya,Telur Gred B 30 biji,30,unit,13.50
+2026-07-12,c_egg,Sinar Borong Jaya,Telur Gred B 30 biji,30,unit,16.50
+2026-06-28,c_packaging,PackPro Trading,Bekas makanan 50 pcs,50,unit,8.00
+2026-07-12,c_packaging,PackPro Trading,Bekas makanan 50 pcs,50,unit,10.00
+2026-06-28,c_sambal,Sinar Borong Jaya,Minyak masak 5kg,5,kg,28.00
+2026-07-12,c_sambal,Sinar Borong Jaya,Minyak masak 5kg,5,kg,32.00

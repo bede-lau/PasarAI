@@ -1,0 +1,15 @@
+{
+  "synthetic": true,
+  "source": "architecture response states",
+  "schema_id": "costs.response",
+  "payload": {
+    "state": "clarification_required",
+    "clarifications": [
+      {
+        "field": "lines[0].pack_size",
+        "question": "Is RM2 for one pack of 50 containers?",
+        "options": ["yes", "no"]
+      }
+    ]
+  }
+}

@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "price-volume-scenario.response",
+  "x-typescript-name": "PriceVolumeScenarioResponse",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "merchant_id",
+    "product_id",
+    "as_of",
+    "target_gross_margin_pct",
+    "assumption",
+    "scenarios"
+  ],
+  "properties": {
+    "merchant_id": {
+      "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+    },
+    "product_id": {
+      "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+    },
+    "as_of": {
+      "$ref": "../shared/primitives.schema.json#/$defs/Date"
+    },
+    "target_gross_margin_pct": {
+      "$ref": "../shared/primitives.schema.json#/$defs/DecimalString"
+    },
+    "assumption": {
+      "const": "constant_unit_cogs_and_independent_price_volume_inputs"
+    },
+    "scenarios": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "row",
+          "column",
+          "quantity",
+          "unit_price_rm",
+          "revenue_rm",
+          "cogs_rm",
+          "gross_profit_rm",
+          "gross_margin_pct",
+          "incremental_gross_profit_rm",
+          "target_margin_met"
+        ],
+        "properties": {
+          "row": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "column": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "quantity": {
+            "$ref": "../shared/primitives.schema.json#/$defs/NonNegativeDecimalString"
+          },
+          "unit_price_rm": {
+            "$ref": "../shared/primitives.schema.json#/$defs/NonNegativeMyrAmount"
+          },
+          "revenue_rm": {
+            "$ref": "../shared/primitives.schema.json#/$defs/MyrAmount"
+          },
+          "cogs_rm": {
+            "$ref": "../shared/primitives.schema.json#/$defs/MyrAmount"
+          },
+          "gross_profit_rm": {
+            "$ref": "../shared/primitives.schema.json#/$defs/MyrAmount"
+          },
+          "gross_margin_pct": {
+            "$ref": "../shared/primitives.schema.json#/$defs/DecimalString"
+          },
+          "incremental_gross_profit_rm": {
+            "$ref": "../shared/primitives.schema.json#/$defs/MyrAmount"
+          },
+          "target_margin_met": {
+            "type": "boolean"
+          }
+        }
+      }
+    }
+  }
+}

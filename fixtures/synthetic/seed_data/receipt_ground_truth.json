@@ -1,0 +1,111 @@
+{
+  "receipt_001_sinar_borong.jpg": {
+    "receipt_id": "SBR-120726-184",
+    "supplier_name": "Sinar Borong Jaya",
+    "date": "2026-07-12",
+    "currency": "MYR",
+    "line_items": [
+      {
+        "raw_name": "Telur Gred B 30 biji x 3 tray",
+        "normalized_component_id": "c_egg",
+        "quantity": 3,
+        "uom": "tray",
+        "pack_size": 30,
+        "unit_price_rm": 16.5,
+        "total_price_rm": 49.5
+      },
+      {
+        "raw_name": "Minyak Masak 5kg x 1",
+        "normalized_component_id": "c_sambal",
+        "quantity": 1,
+        "uom": "tin",
+        "pack_size": 5,
+        "unit_price_rm": 32.0,
+        "total_price_rm": 32.0
+      },
+      {
+        "raw_name": "Santan Segar 1kg x 4",
+        "normalized_component_id": "c_coconut",
+        "quantity": 4,
+        "uom": "pack",
+        "pack_size": 1,
+        "unit_price_rm": 15.5,
+        "total_price_rm": 62.0
+      }
+    ],
+    "total_rm": 143.5
+  },
+  "receipt_002_packpro.jpg": {
+    "receipt_id": "PPT-260712-077",
+    "supplier_name": "PackPro Trading",
+    "date": "2026-07-12",
+    "currency": "MYR",
+    "line_items": [
+      {
+        "raw_name": "Bekas Makanan 50 pcs x 4",
+        "normalized_component_id": "c_packaging",
+        "quantity": 4,
+        "uom": "bundle",
+        "pack_size": 50,
+        "unit_price_rm": 10.0,
+        "total_price_rm": 40.0
+      },
+      {
+        "raw_name": "Sudu Plastik 100 pcs x 1",
+        "normalized_component_id": null,
+        "quantity": 1,
+        "uom": "pack",
+        "pack_size": 100,
+        "unit_price_rm": 3.8,
+        "total_price_rm": 3.8
+      },
+      {
+        "raw_name": "Getah 500g x 1",
+        "normalized_component_id": null,
+        "quantity": 1,
+        "uom": "pack",
+        "pack_size": 0.5,
+        "unit_price_rm": 6.5,
+        "total_price_rm": 6.5
+      }
+    ],
+    "total_rm": 50.3
+  },
+  "receipt_003_pasar_pagi.jpg": {
+    "receipt_id": "PPSS2-1207",
+    "supplier_name": "Pasar Pagi SS2",
+    "date": "2026-07-12",
+    "currency": "MYR",
+    "line_items": [
+      {
+        "raw_name": "Timun 3kg",
+        "normalized_component_id": "c_cucumber",
+        "quantity": 3,
+        "uom": "kg",
+        "pack_size": null,
+        "unit_price_rm": 4.0,
+        "total_price_rm": 12.0
+      },
+      {
+        "raw_name": "Kacang 2kg",
+        "normalized_component_id": "c_peanut",
+        "quantity": 2,
+        "uom": "kg",
+        "pack_size": null,
+        "unit_price_rm": 12.0,
+        "total_price_rm": 24.0
+      },
+      {
+        "raw_name": "Ikan bilis 1kg",
+        "normalized_component_id": "c_anchovy",
+        "quantity": 1,
+        "uom": "kg",
+        "pack_size": null,
+        "unit_price_rm": 28.5,
+        "total_price_rm": 28.5
+      }
+    ],
+    "total_rm": 64.5,
+    "expected_behavior": "Low-confidence handwritten-style receipt. Ask merchant to confirm ikan bilis quantity and total before committing."
+  }
+}

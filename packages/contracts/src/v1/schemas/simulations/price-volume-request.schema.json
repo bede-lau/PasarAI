@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "price-volume-scenario.request",
+  "x-typescript-name": "PriceVolumeScenarioRequest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "merchant_id",
+    "product_id",
+    "as_of",
+    "center_price_rm",
+    "center_quantity",
+    "price_step_pct",
+    "quantity_step_pct"
+  ],
+  "properties": {
+    "merchant_id": {
+      "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+    },
+    "product_id": {
+      "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+    },
+    "as_of": {
+      "$ref": "../shared/primitives.schema.json#/$defs/Date"
+    },
+    "center_price_rm": {
+      "$ref": "../shared/primitives.schema.json#/$defs/NonNegativeMyrAmount"
+    },
+    "center_quantity": {
+      "$ref": "../shared/primitives.schema.json#/$defs/NonNegativeDecimalString"
+    },
+    "price_step_pct": {
+      "$ref": "../shared/primitives.schema.json#/$defs/NonNegativeDecimalString"
+    },
+    "quantity_step_pct": {
+      "$ref": "../shared/primitives.schema.json#/$defs/NonNegativeDecimalString"
+    }
+  }
+}

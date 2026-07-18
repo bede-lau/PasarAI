@@ -1,0 +1,45 @@
+{
+  "synthetic": true,
+  "source": "PasarAI_Handoff_Package/demo_data/seed_data/receipt_ground_truth.json",
+  "schema_id": "receipt-upload.response",
+  "payload": {
+    "state": "review_required",
+    "event_id": "evt_receipt_review_003",
+    "evidence_uri": "synthetic://evidence/receipt_003_pasar_pagi.jpg",
+    "reason": "low_overall_confidence",
+    "extraction": {
+      "receipt_id": "PPSS2-1207",
+      "supplier_name": "Pasar Pagi SS2",
+      "date": "2026-07-12",
+      "currency": "MYR",
+      "line_items": [
+        {
+          "raw_name": "Ikan bilis 1kg",
+          "normalized_component_id": "c_anchovy",
+          "quantity": "1",
+          "uom": "kg",
+          "pack_size": null,
+          "unit_price_rm": "28.50",
+          "total_price_rm": "28.50",
+          "confidence": "0.72"
+        }
+      ],
+      "total_rm": "64.50",
+      "overall_confidence": "0.78",
+      "ambiguities": [
+        {
+          "field": "line_items[0].quantity",
+          "question": "Confirm ikan bilis quantity and total?",
+          "options": ["1 kg, RM28.50", "Needs correction"]
+        }
+      ]
+    },
+    "clarifications": [
+      {
+        "field": "line_items[0].quantity",
+        "question": "Confirm ikan bilis quantity and total?",
+        "options": ["1 kg, RM28.50", "Needs correction"]
+      }
+    ]
+  }
+}

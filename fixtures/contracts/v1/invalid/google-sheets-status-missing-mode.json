@@ -1,0 +1,16 @@
+{
+  "synthetic": true,
+  "expected_failure": "A Google Sheets status response must declare its sync mode.",
+  "schema_id": "google-sheets-status.response",
+  "payload": {
+    "state": "not_connected",
+    "spreadsheet_id": null,
+    "spreadsheet_url": null,
+    "spreadsheet_title": null,
+    "last_export_at": null,
+    "last_import_at": null,
+    "last_reconciled_at": null,
+    "watch_expires_at": null,
+    "last_error": null
+  }
+}

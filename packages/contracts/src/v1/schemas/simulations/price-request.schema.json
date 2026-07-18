@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "price-simulation.request",
+  "x-typescript-name": "PriceSimulationRequest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["merchant_id", "product_id", "quantity", "proposed_unit_price_rm", "as_of"],
+  "properties": {
+    "merchant_id": { "$ref": "../shared/primitives.schema.json#/$defs/Identifier" },
+    "product_id": { "$ref": "../shared/primitives.schema.json#/$defs/Identifier" },
+    "quantity": { "$ref": "../shared/primitives.schema.json#/$defs/NonNegativeDecimalString" },
+    "proposed_unit_price_rm": { "$ref": "../shared/primitives.schema.json#/$defs/NonNegativeMyrAmount" },
+    "as_of": { "$ref": "../shared/primitives.schema.json#/$defs/Date" }
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "synthetic": true,
+  "source": "PasarAI_Handoff_Package/demo_data/seed_data/today_events.json",
+  "schema_id": "cost-changes.request",
+  "payload": {
+    "merchant_id": "m_kak_lina_001",
+    "occurred_at": "2026-07-12T14:30:00+08:00",
+    "component_id": "c_packaging",
+    "increase_rm": "2.00",
+    "evidence": {
+      "transcript": "Packaging cost naik two ringgit.",
+      "external_message_id": "evt_voice_001"
+    }
+  }
+}

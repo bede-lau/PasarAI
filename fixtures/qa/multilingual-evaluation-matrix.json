@@ -1,0 +1,223 @@
+{
+  "version": "1",
+  "synthetic": true,
+  "merchant_id": "m_kak_lina_001",
+  "languages": [
+    "en",
+    "ms",
+    "zh",
+    "ms-en"
+  ],
+  "cases": [
+    {
+      "fixture_id": "VN-01",
+      "channel": "voice_agent",
+      "input_language": "ms-en",
+      "expected_response_language": "ms-en",
+      "transcript": "Hari ni habis forty bungkus nasi lemak biasa, semua five ringgit. Packaging cost naik two ringgit.",
+      "expected_tools": [
+        "record_sales",
+        "record_cost_change"
+      ],
+      "mutation_expectation": "clarification_only",
+      "required_tokens": [
+        "40",
+        "RM5",
+        "50"
+      ],
+      "forbidden_claims": [
+        "packaging cost committed before denominator clarification"
+      ],
+      "automated_assertion": "Sales commit once; the packaging increase creates a clarification and no cost mutation.",
+      "manual_assertion": "Reply is concise natural Manglish and clearly asks for the denominator."
+    },
+    {
+      "fixture_id": "VN-02",
+      "channel": "voice_agent",
+      "input_language": "ms",
+      "expected_response_language": "ms",
+      "transcript": "RM2 naik untuk satu pek 50 bekas, bukan setiap bekas.",
+      "expected_tools": [
+        "record_cost_change"
+      ],
+      "mutation_expectation": "commit_once",
+      "required_tokens": [
+        "RM0.16",
+        "RM0.20"
+      ],
+      "forbidden_claims": [
+        "a second packaging mutation on replay"
+      ],
+      "automated_assertion": "The pending clarification resolves once and packaging contribution becomes RM0.20.",
+      "manual_assertion": "Malay read-back states the before and after contribution without accounting jargon."
+    },
+    {
+      "fixture_id": "VN-03",
+      "channel": "voice_agent",
+      "input_language": "en",
+      "expected_response_language": "en",
+      "transcript": "Which cost hurt my margin the most this week, and how much did it add to one pack?",
+      "expected_tools": [
+        "get_daily_summary"
+      ],
+      "mutation_expectation": "read_only",
+      "required_tokens": [
+        "RM0.10",
+        "RM0.08",
+        "RM0.06",
+        "RM0.04"
+      ],
+      "forbidden_claims": [
+        "net profit",
+        "an invented cost driver"
+      ],
+      "automated_assertion": "The summary ranks eggs, sambal/oil, coconut milk, and packaging in fixture order.",
+      "manual_assertion": "English answer is concise and practical."
+    },
+    {
+      "fixture_id": "VN-04",
+      "channel": "voice_agent",
+      "input_language": "zh",
+      "expected_response_language": "zh",
+      "transcript": "如果我明天卖五块五，但是只卖三十五包，我的毛利还有多少？",
+      "expected_tools": [
+        "simulate_price"
+      ],
+      "mutation_expectation": "read_only",
+      "required_tokens": [
+        "RM192.50",
+        "RM81.20",
+        "42.18%",
+        "RM3.18"
+      ],
+      "forbidden_claims": [
+        "a committed price change",
+        "guaranteed demand"
+      ],
+      "automated_assertion": "The deterministic simulation matches expected_metrics.json exactly.",
+      "manual_assertion": "Answer is natural Simplified Chinese and states the current-cost/constant-demand assumption."
+    },
+    {
+      "fixture_id": "VN-05",
+      "channel": "voice_agent",
+      "input_language": "ms",
+      "expected_response_language": "ms",
+      "transcript": "Yang tadi saya tersalah cakap. Bukan empat puluh bungkus, sebenarnya tiga puluh lapan.",
+      "expected_tools": [
+        "record_correction"
+      ],
+      "mutation_expectation": "append_correction",
+      "required_tokens": [
+        "38"
+      ],
+      "forbidden_claims": [
+        "the original sale was deleted",
+        "the source evidence was overwritten"
+      ],
+      "automated_assertion": "A correction event is appended and the original sale remains available.",
+      "manual_assertion": "Malay confirmation makes the correction explicit."
+    },
+    {
+      "fixture_id": "VN-06",
+      "channel": "voice_agent",
+      "input_language": "zh",
+      "expected_response_language": "zh",
+      "transcript": "现在请用中文回答。今天为什么利润率下降？",
+      "expected_tools": [
+        "language_detection",
+        "get_daily_summary"
+      ],
+      "mutation_expectation": "read_only",
+      "required_tokens": [
+        "36.40%",
+        "42.00%"
+      ],
+      "forbidden_claims": [
+        "merchant context changed during the language switch"
+      ],
+      "automated_assertion": "The conversation catalog requires language_detection=zh and the shared summary tool.",
+      "manual_assertion": "The same merchant/product context is retained in Mandarin."
+    },
+    {
+      "fixture_id": "VN-07",
+      "channel": "voice_agent",
+      "input_language": "en",
+      "expected_response_language": "en",
+      "transcript": "Switch back to English. What price keeps a forty percent gross margin?",
+      "expected_tools": [
+        "language_detection",
+        "get_daily_summary"
+      ],
+      "mutation_expectation": "read_only",
+      "required_tokens": [
+        "RM5.30",
+        "40%"
+      ],
+      "forbidden_claims": [
+        "a guaranteed recommendation",
+        "a committed selling price"
+      ],
+      "automated_assertion": "The price floor is derived from RM3.18 current unit COGS.",
+      "manual_assertion": "The agent switches back to English and states the assumptions."
+    },
+    {
+      "fixture_id": "VN-08",
+      "channel": "voice_agent",
+      "input_language": "ms",
+      "expected_response_language": "ms",
+      "transcript": "Hari ni helper saya datang kerja, tapi saya lupa berapa upah dia. Boleh kira untung bersih?",
+      "expected_tools": [],
+      "mutation_expectation": "no_mutation",
+      "required_tokens": [
+        "gross profit"
+      ],
+      "forbidden_claims": [
+        "invented helper wages",
+        "invented net profit",
+        "invented take-home earnings"
+      ],
+      "automated_assertion": "The conversation evaluation forbids a numeric net-profit claim.",
+      "manual_assertion": "Malay response distinguishes gross profit from net profit."
+    },
+    {
+      "fixture_id": "TM-03",
+      "channel": "telegram_text",
+      "input_language": "ms-en",
+      "expected_response_language": "ms-en",
+      "transcript": "Packaging naik RM2.",
+      "expected_tools": [
+        "record_cost_change"
+      ],
+      "mutation_expectation": "clarification_only",
+      "required_tokens": [
+        "pack size"
+      ],
+      "forbidden_claims": [
+        "a cost mutation without a denominator"
+      ],
+      "automated_assertion": "The ambiguous text fixture creates a clarification and zero ledger events.",
+      "manual_assertion": "The clarification is understandable to a non-accountant."
+    },
+    {
+      "fixture_id": "TM-07",
+      "channel": "telegram_text",
+      "input_language": "zh",
+      "expected_response_language": "zh",
+      "transcript": "如果鸡蛋再涨一成，五块钱的售价还可以保持四成毛利吗？",
+      "expected_tools": [
+        "simulate_price"
+      ],
+      "mutation_expectation": "read_only",
+      "required_tokens": [
+        "MYR",
+        "assumption"
+      ],
+      "forbidden_claims": [
+        "a ledger mutation",
+        "an unstated demand assumption"
+      ],
+      "automated_assertion": "The fixture is classified as a read-only scenario.",
+      "manual_assertion": "Simplified Chinese answer labels every assumption."
+    }
+  ]
+}

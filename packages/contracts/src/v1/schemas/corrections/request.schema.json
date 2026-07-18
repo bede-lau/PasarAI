@@ -1,0 +1,92 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "corrections.request",
+  "x-typescript-name": "CorrectionRequest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["merchant_id", "target_event_id", "occurred_at", "reason", "replacement_payload", "evidence"],
+  "properties": {
+    "merchant_id": { "$ref": "../shared/primitives.schema.json#/$defs/Identifier" },
+    "target_event_id": { "$ref": "../shared/primitives.schema.json#/$defs/Identifier" },
+    "occurred_at": { "$ref": "../shared/primitives.schema.json#/$defs/DateTime" },
+    "reason": { "type": "string", "minLength": 1 },
+    "replacement_payload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["changes"],
+      "properties": {
+        "changes": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "oneOf": [
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["kind", "field", "corrected_value"],
+                 "properties": {
+                   "kind": { "const": "money" },
+                   "field": { "const": "unit_price_rm" },
+                   "line_index": { "type": "integer", "minimum": 0 },
+                   "previous_value": {
+                    "anyOf": [
+                      { "$ref": "../shared/primitives.schema.json#/$defs/MyrAmount" },
+                      { "type": "null" }
+                    ]
+                  },
+                  "corrected_value": { "$ref": "../shared/primitives.schema.json#/$defs/MyrAmount" }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["kind", "field", "corrected_value"],
+                 "properties": {
+                   "kind": { "const": "decimal" },
+                   "field": { "const": "quantity" },
+                   "line_index": { "type": "integer", "minimum": 0 },
+                   "previous_value": {
+                    "anyOf": [
+                      { "$ref": "../shared/primitives.schema.json#/$defs/NonNegativeDecimalString" },
+                      { "type": "null" }
+                    ]
+                  },
+                  "corrected_value": { "$ref": "../shared/primitives.schema.json#/$defs/NonNegativeDecimalString" }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["kind", "field", "corrected_value"],
+                 "properties": {
+                   "kind": { "const": "identifier" },
+                   "field": { "const": "product_id" },
+                   "line_index": { "type": "integer", "minimum": 0 },
+                   "previous_value": {
+                    "anyOf": [
+                      { "$ref": "../shared/primitives.schema.json#/$defs/Identifier" },
+                      { "type": "null" }
+                    ]
+                  },
+                  "corrected_value": { "$ref": "../shared/primitives.schema.json#/$defs/Identifier" }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["kind", "field", "corrected_value"],
+                "properties": {
+                  "kind": { "const": "text" },
+                  "field": { "const": "source_language" },
+                  "previous_value": { "type": ["string", "null"] },
+                  "corrected_value": { "type": "string", "minLength": 1 }
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    "evidence": { "$ref": "../shared/primitives.schema.json#/$defs/Evidence" }
+  }
+}

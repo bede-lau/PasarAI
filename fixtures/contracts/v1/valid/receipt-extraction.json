@@ -1,0 +1,26 @@
+{
+  "synthetic": true,
+  "source": "PasarAI_Handoff_Package/demo_data/seed_data/receipt_ground_truth.json receipt_002_packpro.jpg",
+  "schema_id": "receipt-extraction",
+  "payload": {
+    "receipt_id": "PPT-260712-077",
+    "supplier_name": "PackPro Trading",
+    "date": "2026-07-12",
+    "currency": "MYR",
+    "line_items": [
+      {
+        "raw_name": "Bekas Makanan 50 pcs x 4",
+        "normalized_component_id": "c_packaging",
+        "quantity": "4",
+        "uom": "bundle",
+        "pack_size": "50",
+        "unit_price_rm": "10.00",
+        "total_price_rm": "40.00",
+        "confidence": "0.98"
+      }
+    ],
+    "total_rm": "40.00",
+    "overall_confidence": "0.98",
+    "ambiguities": []
+  }
+}

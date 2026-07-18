@@ -1,0 +1,24 @@
+{
+  "name": "@pasarai/api",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.js",
+    "./backend": "./src/backend/index.js",
+    "./runtime": "./src/runtime.js"
+  },
+  "scripts": {
+    "db:migrate": "node scripts/migrate-lakebase.mjs",
+    "db:seed:synthetic": "node scripts/seed-lakebase-synthetic.mjs",
+    "dev": "node --env-file-if-exists=.env src/server.js",
+    "start": "node --env-file-if-exists=.env src/server.js",
+    "test": "node --test test/*.test.mjs"
+  },
+  "dependencies": {
+    "@pasarai/analytics": "workspace:*",
+    "@pasarai/contracts": "workspace:*",
+    "@pasarai/finance": "workspace:*",
+    "pg": "8.22.0"
+  }
+}

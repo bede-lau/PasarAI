@@ -1,0 +1,7 @@
+{
+  "synthetic": true,
+  "schema_id": "google-sheets-oauth-start.request",
+  "payload": {
+    "redirect_uri": "https://pasarai.example/api/pasarai/integrations/google-sheets/callback"
+  }
+}

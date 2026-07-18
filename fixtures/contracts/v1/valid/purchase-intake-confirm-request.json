@@ -1,0 +1,11 @@
+{
+  "synthetic": true,
+  "source": "PasarAI cash purchase feature fixture",
+  "schema_id": "purchase-intake-confirm.request",
+  "payload": {
+    "merchant_id": "m_kak_lina_001",
+    "intake_id": "purchase_intake_001",
+    "expected_version": 1,
+    "confirmation_token": "confirm_001"
+  }
+}

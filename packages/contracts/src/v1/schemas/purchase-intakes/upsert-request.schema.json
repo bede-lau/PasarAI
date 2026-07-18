@@ -1,0 +1,106 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "purchase-intake-upsert.request",
+  "x-typescript-name": "PurchaseIntakeUpsertRequest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "merchant_id",
+    "occurred_at",
+    "source",
+    "metadata",
+    "item",
+    "evidence"
+  ],
+  "properties": {
+    "merchant_id": {
+      "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+    },
+    "intake_id": {
+      "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+    },
+    "expected_version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "occurred_at": {
+      "$ref": "../shared/primitives.schema.json#/$defs/DateTime"
+    },
+    "source": {
+      "$ref": "../shared/primitives.schema.json#/$defs/SourceKind"
+    },
+    "source_language": {
+      "$ref": "../shared/primitives.schema.json#/$defs/SourceLanguage"
+    },
+    "supplier_name": {
+      "type": ["string", "null"],
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["payment_method"],
+      "properties": {
+        "payment_method": {
+          "const": "cash"
+        },
+        "purchase_location": {
+          "type": ["string", "null"],
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "note": {
+          "type": ["string", "null"],
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "tags": {
+          "type": "array",
+          "maxItems": 20,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 50
+          }
+        },
+        "external_reference": {
+          "type": ["string", "null"],
+          "minLength": 1,
+          "maxLength": 200
+        }
+      }
+    },
+    "item": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "component_id": {
+          "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+        },
+        "raw_name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "quantity": {
+          "$ref": "../shared/primitives.schema.json#/$defs/PositiveDecimalString"
+        },
+        "uom": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 50
+        },
+        "pack_size": {
+          "$ref": "../shared/primitives.schema.json#/$defs/PositiveDecimalString"
+        },
+        "total_price_rm": {
+          "$ref": "../shared/primitives.schema.json#/$defs/NonNegativeMyrAmount"
+        }
+      }
+    },
+    "evidence": {
+      "$ref": "../shared/primitives.schema.json#/$defs/Evidence"
+    }
+  }
+}

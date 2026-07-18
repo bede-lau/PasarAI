@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "cost-changes.request",
+  "x-typescript-name": "CostChangeRequest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["merchant_id", "occurred_at", "component_id", "increase_rm", "evidence"],
+  "properties": {
+    "merchant_id": { "$ref": "../shared/primitives.schema.json#/$defs/Identifier" },
+    "pack_size": { "$ref": "../shared/primitives.schema.json#/$defs/PositiveDecimalString" },
+    "clarification_source": { "$ref": "../shared/primitives.schema.json#/$defs/Identifier" },
+    "occurred_at": { "$ref": "../shared/primitives.schema.json#/$defs/DateTime" },
+    "component_id": { "$ref": "../shared/primitives.schema.json#/$defs/Identifier" },
+    "increase_rm": { "$ref": "../shared/primitives.schema.json#/$defs/NonNegativeMyrAmount" },
+    "evidence": { "$ref": "../shared/primitives.schema.json#/$defs/Evidence" }
+  }
+}

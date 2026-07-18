@@ -1,0 +1,160 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "receipt-reviews.response",
+  "x-typescript-name": "ReceiptReviewsResponse",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["merchant_id", "receipts"],
+  "properties": {
+    "merchant_id": {
+      "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+    },
+    "receipts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "receipt_event_id",
+          "review_state",
+          "version",
+          "title",
+          "image_uri",
+          "uploaded_at",
+          "updated_at",
+          "extraction",
+          "confirmed",
+          "cost_event_id",
+          "verified_at",
+          "material_changes"
+        ],
+        "properties": {
+          "receipt_event_id": {
+            "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+          },
+          "review_state": {
+            "type": "string",
+            "enum": ["draft", "verified"]
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1
+          },
+          "image_uri": {
+            "type": ["string", "null"]
+          },
+          "uploaded_at": {
+            "$ref": "../shared/primitives.schema.json#/$defs/DateTime"
+          },
+          "updated_at": {
+            "$ref": "../shared/primitives.schema.json#/$defs/DateTime"
+          },
+          "extraction": {
+            "$ref": "receipt-extraction"
+          },
+          "confirmed": {
+            "type": "boolean"
+          },
+          "cost_event_id": {
+            "anyOf": [
+              {
+                "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "verified_at": {
+            "anyOf": [
+              {
+                "$ref": "../shared/primitives.schema.json#/$defs/DateTime"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "material_changes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "component_id",
+                "component_name",
+                "product_id",
+                "quantity",
+                "uom",
+                "pack_size",
+                "total_price_rm",
+                "previous_cost_rm_per_pack",
+                "current_cost_rm_per_pack",
+                "change_rm_per_pack"
+              ],
+              "properties": {
+                "component_id": {
+                  "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+                },
+                "component_name": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "product_id": {
+                  "anyOf": [
+                    {
+                      "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "quantity": {
+                  "$ref": "../shared/primitives.schema.json#/$defs/PositiveDecimalString"
+                },
+                "uom": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "pack_size": {
+                  "$ref": "../shared/primitives.schema.json#/$defs/PositiveDecimalString"
+                },
+                "total_price_rm": {
+                  "$ref": "../shared/primitives.schema.json#/$defs/NonNegativeMyrAmount"
+                },
+                "previous_cost_rm_per_pack": {
+                  "anyOf": [
+                    {
+                      "$ref": "../shared/primitives.schema.json#/$defs/NonNegativeMyrAmount"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "current_cost_rm_per_pack": {
+                  "$ref": "../shared/primitives.schema.json#/$defs/NonNegativeMyrAmount"
+                },
+                "change_rm_per_pack": {
+                  "anyOf": [
+                    {
+                      "$ref": "../shared/primitives.schema.json#/$defs/MyrAmount"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

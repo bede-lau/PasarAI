@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "costs.request",
+  "x-typescript-name": "CostsRequest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["merchant_id", "occurred_at", "supplier_name", "lines", "evidence"],
+  "properties": {
+    "merchant_id": { "$ref": "../shared/primitives.schema.json#/$defs/Identifier" },
+    "occurred_at": { "$ref": "../shared/primitives.schema.json#/$defs/DateTime" },
+    "source": { "$ref": "../shared/primitives.schema.json#/$defs/SourceKind" },
+    "source_language": { "$ref": "../shared/primitives.schema.json#/$defs/SourceLanguage" },
+    "supplier_name": { "type": "string", "minLength": 1 },
+    "metadata": { "$ref": "../shared/primitives.schema.json#/$defs/PurchaseMetadata" },
+    "lines": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["component_id", "quantity", "uom", "pack_size", "total_price_rm", "confidence"],
+        "properties": {
+          "component_id": { "$ref": "../shared/primitives.schema.json#/$defs/Identifier" },
+          "raw_name": { "type": "string", "minLength": 1 },
+          "quantity": { "$ref": "../shared/primitives.schema.json#/$defs/NonNegativeDecimalString" },
+          "uom": { "type": "string", "minLength": 1 },
+          "pack_size": { "$ref": "../shared/primitives.schema.json#/$defs/NonNegativeDecimalString" },
+          "total_price_rm": { "$ref": "../shared/primitives.schema.json#/$defs/NonNegativeMyrAmount" },
+          "confidence": { "$ref": "../shared/primitives.schema.json#/$defs/Confidence" }
+        }
+      }
+    },
+    "evidence": { "$ref": "../shared/primitives.schema.json#/$defs/Evidence" }
+  }
+}

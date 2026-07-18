@@ -1,0 +1,22 @@
+{
+  "synthetic": true,
+  "source": "regression",
+  "expected_failure": "sales quantities must be greater than zero",
+  "schema_id": "sales.request",
+  "payload": {
+    "merchant_id": "m_kak_lina_001",
+    "occurred_at": "2026-07-12T14:30:00+08:00",
+    "source": "voice_agent",
+    "source_language": "ms-en",
+    "lines": [
+      {
+        "product_id": "p_nlb_001",
+        "quantity": "0",
+        "unit_price_rm": "5.00"
+      }
+    ],
+    "evidence": {
+      "external_message_id": "zero-quantity-regression"
+    }
+  }
+}

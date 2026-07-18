@@ -1,0 +1,16 @@
+{
+  "synthetic": true,
+  "schema_id": "google-sheets-status.response",
+  "payload": {
+    "state": "connected",
+    "spreadsheet_id": "sheet_synthetic_001",
+    "spreadsheet_url": "https://docs.google.com/spreadsheets/d/sheet_synthetic_001/edit",
+    "spreadsheet_title": "PasarAI Metrics",
+    "sync_mode": "manual",
+    "last_export_at": "2026-07-16T12:00:00.000Z",
+    "last_import_at": null,
+    "last_reconciled_at": null,
+    "watch_expires_at": null,
+    "last_error": null
+  }
+}

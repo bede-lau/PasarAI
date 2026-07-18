@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "receipt-review-upsert.request",
+  "x-typescript-name": "ReceiptReviewUpsertRequest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "merchant_id",
+    "receipt_event_id",
+    "occurred_at",
+    "review_state",
+    "extraction"
+  ],
+  "properties": {
+    "merchant_id": {
+      "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+    },
+    "receipt_event_id": {
+      "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+    },
+    "occurred_at": {
+      "$ref": "../shared/primitives.schema.json#/$defs/DateTime"
+    },
+    "review_state": {
+      "type": "string",
+      "enum": ["draft", "archived"]
+    },
+    "extraction": {
+      "$ref": "receipt-extraction"
+    }
+  }
+}

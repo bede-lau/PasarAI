@@ -1,0 +1,325 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "analytics-overview.response",
+  "x-typescript-name": "AnalyticsOverviewResponse",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "merchant_id",
+    "product_id",
+    "from",
+    "to",
+    "generated_at",
+    "data_through",
+    "freshness",
+    "completeness_coverage_pct",
+    "quality_flags",
+    "days",
+    "alerts",
+    "cost_waterfall"
+  ],
+  "properties": {
+    "merchant_id": {
+      "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+    },
+    "product_id": {
+      "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+    },
+    "from": {
+      "$ref": "../shared/primitives.schema.json#/$defs/Date"
+    },
+    "to": {
+      "$ref": "../shared/primitives.schema.json#/$defs/Date"
+    },
+    "generated_at": {
+      "$ref": "../shared/primitives.schema.json#/$defs/DateTime"
+    },
+    "data_through": {
+      "anyOf": [
+        {
+          "$ref": "../shared/primitives.schema.json#/$defs/Date"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "freshness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "state",
+        "lag_seconds",
+        "source_max_ingested_at",
+        "projection_version"
+      ],
+      "properties": {
+        "state": {
+          "enum": [
+            "fresh",
+            "stale",
+            "unavailable"
+          ]
+        },
+        "lag_seconds": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "source_max_ingested_at": {
+          "anyOf": [
+            {
+              "$ref": "../shared/primitives.schema.json#/$defs/DateTime"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "projection_version": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "completeness_coverage_pct": {
+      "$ref": "../shared/primitives.schema.json#/$defs/DecimalString"
+    },
+    "quality_flags": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "days": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "date",
+          "state",
+          "quantity",
+          "revenue_rm",
+          "cogs_rm",
+          "gross_profit_rm",
+          "gross_margin_pct",
+          "sold_out_state"
+        ],
+        "properties": {
+          "date": {
+            "$ref": "../shared/primitives.schema.json#/$defs/Date"
+          },
+          "state": {
+            "enum": [
+              "complete",
+              "partial",
+              "closed_no_sales",
+              "missing"
+            ]
+          },
+          "quantity": {
+            "anyOf": [
+              {
+                "$ref": "../shared/primitives.schema.json#/$defs/NonNegativeDecimalString"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "revenue_rm": {
+            "anyOf": [
+              {
+                "$ref": "../shared/primitives.schema.json#/$defs/MyrAmount"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "cogs_rm": {
+            "anyOf": [
+              {
+                "$ref": "../shared/primitives.schema.json#/$defs/MyrAmount"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "gross_profit_rm": {
+            "anyOf": [
+              {
+                "$ref": "../shared/primitives.schema.json#/$defs/MyrAmount"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "gross_margin_pct": {
+            "anyOf": [
+              {
+                "$ref": "../shared/primitives.schema.json#/$defs/DecimalString"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "sold_out_state": {
+            "enum": [
+              "yes",
+              "no",
+              "unknown"
+            ]
+          }
+        }
+      }
+    },
+    "alerts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "severity",
+          "title",
+          "message",
+          "metric",
+          "threshold",
+          "evidence_id",
+          "action"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+          },
+          "severity": {
+            "enum": [
+              "info",
+              "warning",
+              "critical"
+            ]
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1
+          },
+          "message": {
+            "type": "string",
+            "minLength": 1
+          },
+          "metric": {
+            "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+          },
+          "threshold": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "evidence_id": {
+            "anyOf": [
+              {
+                "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "action": {
+            "enum": [
+              "record_sales",
+              "review_receipt",
+              "resolve_clarification",
+              "inspect_cost",
+              "none"
+            ]
+          }
+        }
+      }
+    },
+    "cost_waterfall": {
+      "anyOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "baseline_date",
+            "baseline_unit_cogs_rm",
+            "current_unit_cogs_rm",
+            "components"
+          ],
+          "properties": {
+            "baseline_date": {
+              "anyOf": [
+                {
+                  "$ref": "../shared/primitives.schema.json#/$defs/Date"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "baseline_unit_cogs_rm": {
+              "$ref": "../shared/primitives.schema.json#/$defs/NonNegativeMyrAmount"
+            },
+            "current_unit_cogs_rm": {
+              "$ref": "../shared/primitives.schema.json#/$defs/NonNegativeMyrAmount"
+            },
+            "components": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "component_id",
+                  "name",
+                  "baseline_cost_rm_per_pack",
+                  "current_cost_rm_per_pack",
+                  "change_rm_per_pack",
+                  "evidence_id"
+                ],
+                "properties": {
+                  "component_id": {
+                    "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+                  },
+                  "name": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "baseline_cost_rm_per_pack": {
+                    "$ref": "../shared/primitives.schema.json#/$defs/NonNegativeMyrAmount"
+                  },
+                  "current_cost_rm_per_pack": {
+                    "$ref": "../shared/primitives.schema.json#/$defs/NonNegativeMyrAmount"
+                  },
+                  "change_rm_per_pack": {
+                    "$ref": "../shared/primitives.schema.json#/$defs/MyrAmount"
+                  },
+                  "evidence_id": {
+                    "anyOf": [
+                      {
+                        "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  }
+}

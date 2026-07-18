@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "sales.request",
+  "x-typescript-name": "SalesRequest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["merchant_id", "occurred_at", "source", "source_language", "lines", "evidence"],
+  "properties": {
+    "merchant_id": { "$ref": "../shared/primitives.schema.json#/$defs/Identifier" },
+    "occurred_at": { "$ref": "../shared/primitives.schema.json#/$defs/DateTime" },
+    "source": { "$ref": "../shared/primitives.schema.json#/$defs/SourceKind" },
+    "source_language": { "$ref": "../shared/primitives.schema.json#/$defs/SourceLanguage" },
+    "lines": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["product_id", "quantity", "unit_price_rm"],
+        "properties": {
+          "product_id": { "$ref": "../shared/primitives.schema.json#/$defs/Identifier" },
+          "quantity": { "$ref": "../shared/primitives.schema.json#/$defs/PositiveDecimalString" },
+          "unit_price_rm": { "$ref": "../shared/primitives.schema.json#/$defs/NonNegativeMyrAmount" }
+        }
+      }
+    },
+    "evidence": { "$ref": "../shared/primitives.schema.json#/$defs/Evidence" }
+  }
+}

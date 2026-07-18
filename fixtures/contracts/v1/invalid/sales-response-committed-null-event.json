@@ -1,0 +1,9 @@
+{
+  "synthetic": true,
+  "expected_failure": "committed response requires a non-null event_id",
+  "schema_id": "sales.response",
+  "payload": {
+    "state": "committed",
+    "event_id": null
+  }
+}

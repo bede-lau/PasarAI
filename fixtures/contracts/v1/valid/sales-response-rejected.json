@@ -1,0 +1,13 @@
+{
+  "synthetic": true,
+  "source": "architecture response states",
+  "schema_id": "sales.response",
+  "payload": {
+    "state": "rejected",
+    "errors": [{
+      "code": "invalid_evidence",
+      "message": "Sales evidence could not be validated.",
+      "field": "evidence"
+    }]
+  }
+}

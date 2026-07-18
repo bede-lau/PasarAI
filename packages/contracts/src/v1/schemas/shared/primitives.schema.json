@@ -1,0 +1,147 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "shared.primitives",
+  "title": "PasarAI v1 shared primitives",
+  "$defs": {
+    "Identifier": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "DecimalString": {
+      "type": "string",
+      "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+    },
+    "NonNegativeDecimalString": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+    },
+    "PositiveDecimalString": {
+      "type": "string",
+      "pattern": "^(0\\.(0*[1-9][0-9]*)|[1-9][0-9]*(\\.[0-9]+)?)$"
+    },
+    "MyrAmount": {
+      "type": "string",
+      "pattern": "^-?(0|[1-9][0-9]*)\\.[0-9]{2}$"
+    },
+    "NonNegativeMyrAmount": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)\\.[0-9]{2}$"
+    },
+    "Confidence": {
+      "type": "string",
+      "pattern": "^(0(\\.[0-9]+)?|1(\\.0+)?)$"
+    },
+    "Date": {
+      "type": "string",
+      "format": "date"
+    },
+    "DateTime": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "SourceLanguage": {
+      "type": "string",
+      "minLength": 2,
+      "pattern": "^[a-z]{2}(-[a-z]{2})*$"
+    },
+    "SourceKind": {
+      "type": "string",
+      "enum": [
+        "voice_agent",
+        "telegram_text",
+        "telegram_voice",
+        "telegram_photo",
+        "web_upload",
+        "web_manual",
+        "text_reply",
+        "receipt_extractor",
+        "api"
+      ]
+    },
+    "PurchaseMetadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["payment_method"],
+      "properties": {
+        "payment_method": {
+          "type": "string",
+          "enum": ["cash", "card", "bank_transfer", "other"]
+        },
+        "purchase_location": {
+          "type": ["string", "null"],
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "note": {
+          "type": ["string", "null"],
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "tags": {
+          "type": "array",
+          "maxItems": 20,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 50
+          }
+        },
+        "external_reference": {
+          "type": ["string", "null"],
+          "minLength": 1,
+          "maxLength": 200
+        }
+      }
+    },
+    "ResponseState": {
+      "type": "string",
+      "enum": [
+        "committed",
+        "clarification_required",
+        "rejected"
+      ]
+    },
+    "Evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "transcript": { "type": "string", "minLength": 1 },
+        "external_message_id": { "$ref": "#/$defs/Identifier" },
+        "receipt_id": { "$ref": "#/$defs/Identifier" },
+        "asset_uri": { "type": "string", "minLength": 1 },
+        "source_event_id": { "$ref": "#/$defs/Identifier" }
+      },
+      "anyOf": [
+        { "required": ["transcript"] },
+        { "required": ["external_message_id"] },
+        { "required": ["receipt_id"] },
+        { "required": ["asset_uri"] },
+        { "required": ["source_event_id"] }
+      ]
+    },
+    "Ambiguity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["field", "question", "options"],
+      "properties": {
+        "field": { "type": "string", "minLength": 1 },
+        "question": { "type": "string", "minLength": 1 },
+        "options": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "ContractError": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "message"],
+      "properties": {
+        "code": { "$ref": "#/$defs/Identifier" },
+        "message": { "type": "string", "minLength": 1 },
+        "field": { "type": ["string", "null"] }
+      }
+    }
+  }
+}

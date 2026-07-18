@@ -1,0 +1,27 @@
+{
+  "synthetic": true,
+  "source": "PasarAI cash purchase feature fixture",
+  "schema_id": "purchase-intake-upsert.request",
+  "payload": {
+    "merchant_id": "m_kak_lina_001",
+    "occurred_at": "2026-07-16T08:00:00.000Z",
+    "source": "web_manual",
+    "source_language": "en",
+    "supplier_name": "Pasar Pagi",
+    "metadata": {
+      "payment_method": "cash",
+      "note": "No receipt was provided"
+    },
+    "item": {
+      "component_id": "c_egg",
+      "raw_name": "Eggs",
+      "quantity": "2",
+      "uom": "tray",
+      "pack_size": "30",
+      "total_price_rm": "24.00"
+    },
+    "evidence": {
+      "transcript": "Manual cash purchase entered on the PasarAI dashboard"
+    }
+  }
+}

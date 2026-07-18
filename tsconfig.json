@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "noEmit": true,
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "target": "ES2022",
+    "skipLibCheck": false,
+    "verbatimModuleSyntax": true
+  },
+  "include": [
+    "packages/contracts/src/v1/types/generated.ts",
+    "packages/contracts/src/v1/index.ts",
+    "tests/types/public-consumer.ts"
+  ]
+}

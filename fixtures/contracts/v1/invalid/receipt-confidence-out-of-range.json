@@ -1,0 +1,15 @@
+{
+  "synthetic": true,
+  "expected_failure": "confidence must be a decimal string from zero through one",
+  "schema_id": "receipt-extraction",
+  "payload": {
+    "receipt_id": "PPT-260712-077",
+    "supplier_name": "PackPro Trading",
+    "date": "2026-07-12",
+    "currency": "MYR",
+    "line_items": [],
+    "total_rm": "40.00",
+    "overall_confidence": "1.20",
+    "ambiguities": []
+  }
+}

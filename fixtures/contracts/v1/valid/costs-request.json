@@ -1,0 +1,24 @@
+{
+  "synthetic": true,
+  "source": "PasarAI_Handoff_Package/demo_data/seed_data/receipt_ground_truth.json",
+  "schema_id": "costs.request",
+  "payload": {
+    "merchant_id": "m_kak_lina_001",
+    "occurred_at": "2026-07-12T08:14:00+08:00",
+    "supplier_name": "PackPro Trading",
+    "lines": [
+      {
+        "component_id": "c_packaging",
+        "quantity": "4",
+        "uom": "bundle",
+        "pack_size": "50",
+        "total_price_rm": "40.00",
+        "confidence": "0.98"
+      }
+    ],
+    "evidence": {
+      "receipt_id": "PPT-260712-077",
+      "asset_uri": "synthetic://receipts/receipt_002_packpro.jpg"
+    }
+  }
+}

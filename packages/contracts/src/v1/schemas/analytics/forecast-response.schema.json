@@ -1,0 +1,156 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "analytics-forecast.response",
+  "x-typescript-name": "AnalyticsForecastResponse",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "merchant_id",
+    "product_id",
+    "as_of",
+    "status",
+    "generated_at",
+    "data_through",
+    "model_version",
+    "reasons",
+    "training_days",
+    "diagnostics",
+    "forecast"
+  ],
+  "properties": {
+    "merchant_id": {
+      "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+    },
+    "product_id": {
+      "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+    },
+    "as_of": {
+      "$ref": "../shared/primitives.schema.json#/$defs/Date"
+    },
+    "status": {
+      "enum": [
+        "unavailable",
+        "shadow",
+        "ready"
+      ]
+    },
+    "generated_at": {
+      "$ref": "../shared/primitives.schema.json#/$defs/DateTime"
+    },
+    "data_through": {
+      "anyOf": [
+        {
+          "$ref": "../shared/primitives.schema.json#/$defs/Date"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "model_version": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "reasons": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "training_days": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "diagnostics": {
+      "anyOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "model_name",
+            "mae",
+            "wape_pct",
+            "prediction_interval_coverage_pct",
+            "backtest_windows",
+            "accuracy_state"
+          ],
+          "properties": {
+            "model_name": {
+              "type": "string",
+              "minLength": 1
+            },
+            "mae": {
+              "$ref": "../shared/primitives.schema.json#/$defs/NonNegativeDecimalString"
+            },
+            "wape_pct": {
+              "$ref": "../shared/primitives.schema.json#/$defs/NonNegativeDecimalString"
+            },
+            "prediction_interval_coverage_pct": {
+              "anyOf": [
+                {
+                  "$ref": "../shared/primitives.schema.json#/$defs/NonNegativeDecimalString"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "backtest_windows": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "accuracy_state": {
+              "enum": [
+                "pass",
+                "fail",
+                "insufficient"
+              ]
+            }
+          }
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "forecast": {
+      "anyOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "date",
+            "p10",
+            "p50",
+            "p90",
+            "planning_note"
+          ],
+          "properties": {
+            "date": {
+              "$ref": "../shared/primitives.schema.json#/$defs/Date"
+            },
+            "p10": {
+              "$ref": "../shared/primitives.schema.json#/$defs/NonNegativeDecimalString"
+            },
+            "p50": {
+              "$ref": "../shared/primitives.schema.json#/$defs/NonNegativeDecimalString"
+            },
+            "p90": {
+              "$ref": "../shared/primitives.schema.json#/$defs/NonNegativeDecimalString"
+            },
+            "planning_note": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  }
+}

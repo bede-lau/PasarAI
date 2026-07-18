@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "receipt-confirm.request",
+  "x-typescript-name": "ReceiptConfirmRequest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["merchant_id", "receipt_event_id", "occurred_at", "extraction"],
+  "properties": {
+    "merchant_id": { "$ref": "../shared/primitives.schema.json#/$defs/Identifier" },
+    "receipt_event_id": { "$ref": "../shared/primitives.schema.json#/$defs/Identifier" },
+    "occurred_at": { "$ref": "../shared/primitives.schema.json#/$defs/DateTime" },
+    "extraction": { "$ref": "receipt-extraction" }
+  }
+}

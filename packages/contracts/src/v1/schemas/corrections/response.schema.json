@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "corrections.response",
+  "x-typescript-name": "CorrectionResponse",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["state", "correction_event_id", "target_event_id", "changes"],
+  "properties": {
+    "state": { "const": "committed" },
+    "correction_event_id": { "$ref": "../shared/primitives.schema.json#/$defs/Identifier" },
+    "target_event_id": { "$ref": "../shared/primitives.schema.json#/$defs/Identifier" },
+    "changes": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["field", "before_value", "after_value"],
+        "properties": {
+          "field": { "type": "string", "minLength": 1 },
+          "line_index": { "type": "integer", "minimum": 0 },
+          "before_value": { "type": "string" },
+          "after_value": { "type": "string" }
+        }
+      }
+    }
+  }
+}

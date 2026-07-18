@@ -1,0 +1,20 @@
+{
+  "name": "PasarAI Bronze Silver Gold",
+  "serverless": true,
+  "continuous": false,
+  "catalog": "PLACEHOLDER",
+  "schema": "PLACEHOLDER",
+  "libraries": [
+    {
+      "file": "pasarai_pipeline.py"
+    }
+  ],
+  "configuration": {
+    "pasarai.source.raw_events_table": "PLACEHOLDER",
+    "pasarai.source.historical_sales_table": "PLACEHOLDER",
+    "pasarai.source.recipe_components_table": "PLACEHOLDER",
+    "pasarai.source.purchase_receipts_table": "PLACEHOLDER",
+    "pasarai.source.purchase_lines_table": "PLACEHOLDER",
+    "pasarai.source.merchants_table": "PLACEHOLDER"
+  }
+}

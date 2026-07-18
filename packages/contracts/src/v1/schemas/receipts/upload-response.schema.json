@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "receipt-upload.response",
+  "x-typescript-name": "ReceiptUploadResponse",
+  "oneOf": [
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["state", "event_id", "evidence_uri", "extraction"],
+      "properties": {
+        "state": { "const": "ready_for_review" },
+        "event_id": { "$ref": "../shared/primitives.schema.json#/$defs/Identifier" },
+        "evidence_uri": { "type": "string", "minLength": 1 },
+        "extraction": { "$ref": "receipt-extraction" }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["state", "event_id", "evidence_uri", "extraction", "clarifications"],
+      "properties": {
+        "state": { "const": "clarification_required" },
+        "event_id": { "$ref": "../shared/primitives.schema.json#/$defs/Identifier" },
+        "evidence_uri": { "type": "string", "minLength": 1 },
+        "extraction": { "$ref": "receipt-extraction" },
+        "clarifications": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "../shared/primitives.schema.json#/$defs/Ambiguity" }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["state", "event_id", "evidence_uri", "reason"],
+      "properties": {
+        "state": { "const": "review_required" },
+        "event_id": { "$ref": "../shared/primitives.schema.json#/$defs/Identifier" },
+        "evidence_uri": { "type": "string", "minLength": 1 },
+        "reason": { "$ref": "../shared/primitives.schema.json#/$defs/Identifier" },
+        "extraction": { "$ref": "receipt-extraction" },
+        "errors": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "clarifications": {
+          "type": "array",
+          "items": { "$ref": "../shared/primitives.schema.json#/$defs/Ambiguity" }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["state", "event_id", "reason"],
+      "properties": {
+        "state": { "const": "rejected" },
+        "event_id": { "$ref": "../shared/primitives.schema.json#/$defs/Identifier" },
+        "evidence_uri": { "type": "string" },
+        "reason": { "$ref": "../shared/primitives.schema.json#/$defs/Identifier" },
+        "mismatch_rm": { "$ref": "../shared/primitives.schema.json#/$defs/NonNegativeMyrAmount" },
+        "errors": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    }
+  ]
+}
