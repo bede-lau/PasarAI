@@ -20,6 +20,7 @@ const allowedRootFiles = new Set([
   ".npmrc",
   "DESIGN.md",
   "PRODUCT.md",
+  "README.md",
   "package.json",
   "pnpm-lock.yaml",
   "pnpm-workspace.yaml",
