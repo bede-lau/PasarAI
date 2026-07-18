@@ -23,12 +23,53 @@ function calendarDate(value, timeZone) {
   return `${values.year}-${values.month}-${values.day}`;
 }
 
+function localDateTimeIso(value, timeZone) {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  if (!match) throw new TypeError(`Invalid calendar date: ${value}`);
+  const target = Date.UTC(
+    Number(match[1]),
+    Number(match[2]) - 1,
+    Number(match[3]),
+    12,
+  );
+  let resolved = target;
+  const formatter = new Intl.DateTimeFormat("en", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    hourCycle: "h23",
+    minute: "2-digit",
+    second: "2-digit",
+  });
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const parts = Object.fromEntries(
+      formatter.formatToParts(new Date(resolved))
+        .map((part) => [part.type, part.value]),
+    );
+    const rendered = Date.UTC(
+      Number(parts.year),
+      Number(parts.month) - 1,
+      Number(parts.day),
+      Number(parts.hour),
+      Number(parts.minute),
+      Number(parts.second),
+    );
+    const correction = target - rendered;
+    resolved += correction;
+    if (correction === 0) break;
+  }
+  return new Date(resolved).toISOString();
+}
+
 export class InMemoryLedgerStore {
   #events = [];
   #eventsById = new Map();
   #eventsByExternalId = new Map();
   #idempotency = new Map();
   #productProfiles = new Map();
+  #purchaseReceipts = new Map();
   #clarificationsBySourceEventId = new Map();
   #merchantTimeZones = new Map();
   #receiptReviewMutations = new Map();
@@ -199,6 +240,13 @@ export class InMemoryLedgerStore {
     );
   }
 
+  getMerchantDateTime(merchantId, date) {
+    return localDateTimeIso(
+      date,
+      this.#merchantTimeZones.get(merchantId) ?? "Asia/Kuala_Lumpur",
+    );
+  }
+
   getProductProfile(productId, { asOfDate, merchantId } = {}) {
     const record = this.#productProfiles.get(productId);
     if (!record || (merchantId && record.merchantId !== merchantId)) return null;
@@ -316,6 +364,55 @@ export class InMemoryLedgerStore {
         );
       }
     }
+  }
+
+  savePurchaseReceipt({
+    receiptId,
+    sourceEventId,
+    merchantId,
+    extraction,
+  }) {
+    const record = {
+      receiptId,
+      sourceEventId,
+      merchantId,
+      supplierName: extraction.supplier_name,
+      receiptDate: extraction.date,
+      currency: extraction.currency,
+      totalRm: extraction.total_rm,
+      overallConfidence: extraction.overall_confidence,
+      reviewState: "accepted",
+      lines: extraction.line_items.map((line, index) => ({
+        purchaseLineId: `${receiptId}:${index}`,
+        receiptId,
+        componentId: line.normalized_component_id,
+        rawName: line.raw_name,
+        quantity: line.quantity,
+        uom: line.uom,
+        packSize: line.pack_size,
+        unitPriceRm: line.unit_price_rm,
+        totalPriceRm: line.total_price_rm,
+        confidence: line.confidence,
+      })),
+    };
+    const existing = this.#purchaseReceipts.get(receiptId);
+    if (existing) {
+      if (
+        existing.sourceEventId !== sourceEventId
+        || existing.merchantId !== merchantId
+      ) {
+        throw new Error(`Receipt ID already exists: ${receiptId}`);
+      }
+      return clone(existing);
+    }
+    this.#purchaseReceipts.set(receiptId, clone(record));
+    return clone(record);
+  }
+
+  listPurchaseReceipts({ merchantId } = {}) {
+    return [...this.#purchaseReceipts.values()]
+      .filter((receipt) => !merchantId || receipt.merchantId === merchantId)
+      .map(clone);
   }
 
   saveClarification(task) {

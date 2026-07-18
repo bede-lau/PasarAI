@@ -163,6 +163,10 @@ recipe_component_fixture = (
         "current_cost_per_pack_rm",
         F.col("current_cost_per_pack_rm").cast("decimal(18,2)"),
     )
+    .withColumn(
+        "usage_per_product_unit",
+        F.col("usage_per_product_unit").cast("decimal(18,4)"),
+    )
 )
 baseline_components = (
     recipe_component_fixture
@@ -189,6 +193,7 @@ insert_only(
         "component_name",
         "baseline_cost_per_pack_rm",
         "current_cost_per_pack_rm",
+        "usage_per_product_unit",
         "uom",
         "snapshot_sequence",
     ],

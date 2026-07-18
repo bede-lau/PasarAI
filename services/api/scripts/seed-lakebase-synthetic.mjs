@@ -247,7 +247,7 @@ async function seedLakebase() {
               snapshot_id
             )
             VALUES (
-              $1, $2, $3, $4, $5, $6, 1, $7::jsonb, $8, $9, $10
+              $1, $2, $3, $4, $5, $6, $7, $8::jsonb, $9, $10, $11
             )
             ON CONFLICT (
               merchant_id,
@@ -259,6 +259,7 @@ async function seedLakebase() {
               component_name = EXCLUDED.component_name,
               baseline_cost_per_pack_rm = EXCLUDED.baseline_cost_per_pack_rm,
               current_cost_per_pack_rm = EXCLUDED.current_cost_per_pack_rm,
+              usage_per_product_unit = EXCLUDED.usage_per_product_unit,
               evidence_projection = EXCLUDED.evidence_projection,
               uom = EXCLUDED.uom
           `,
@@ -269,6 +270,7 @@ async function seedLakebase() {
             component.component_name,
             component.baseline_cost_per_pack_rm,
             snapshot.currentCostRm,
+            component.usage_per_product_unit,
             snapshot.evidenceProjection,
             component.uom,
             snapshot.effectiveAt,

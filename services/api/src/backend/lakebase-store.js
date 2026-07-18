@@ -596,6 +596,23 @@ export class LakebaseLedgerStore {
       ?? new Date(occurredAt).toISOString().slice(0, 10);
   }
 
+  async getMerchantDateTime(merchantId, date) {
+    const result = await this.#query(
+      `
+        SELECT (($2::date + TIME '12:00') AT TIME ZONE timezone)
+          AS occurred_at
+        FROM merchants
+        WHERE merchant_id = $1
+      `,
+      [merchantId, date],
+    );
+    const occurredAt = result.rows[0]?.occurred_at;
+    if (!occurredAt) {
+      throw new Error(`Unknown merchant: ${merchantId}`);
+    }
+    return new Date(occurredAt).toISOString();
+  }
+
   async getProductProfile(productId, { asOfDate, merchantId } = {}) {
     const cutoff = asOfDate ?? "9999-12-31";
     const result = await this.#query(
@@ -788,6 +805,95 @@ export class LakebaseLedgerStore {
         ],
       );
     }
+  }
+
+  async savePurchaseReceipt({
+    receiptId,
+    sourceEventId,
+    merchantId,
+    extraction,
+  }) {
+    return this.#transaction(async () => {
+      const existing = await this.#query(
+        `
+          SELECT source_event_id, merchant_id
+          FROM purchase_receipts
+          WHERE receipt_id = $1
+          FOR UPDATE
+        `,
+        [receiptId],
+      );
+      if (
+        existing.rows[0]
+        && (
+          existing.rows[0].source_event_id !== sourceEventId
+          || existing.rows[0].merchant_id !== merchantId
+        )
+      ) {
+        throw new Error(`Receipt ID already exists: ${receiptId}`);
+      }
+      if (!existing.rows[0]) {
+        await this.#query(
+          `
+            INSERT INTO purchase_receipts (
+              receipt_id,
+              source_event_id,
+              merchant_id,
+              supplier_name,
+              receipt_date,
+              currency,
+              total_rm,
+              overall_confidence,
+              review_state
+            )
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'accepted')
+          `,
+          [
+            receiptId,
+            sourceEventId,
+            merchantId,
+            extraction.supplier_name,
+            extraction.date,
+            extraction.currency,
+            extraction.total_rm,
+            extraction.overall_confidence,
+          ],
+        );
+      }
+      for (const [index, line] of extraction.line_items.entries()) {
+        await this.#query(
+          `
+            INSERT INTO purchase_lines (
+              purchase_line_id,
+              receipt_id,
+              component_id,
+              raw_name,
+              quantity,
+              uom,
+              pack_size,
+              unit_price_rm,
+              total_price_rm,
+              confidence
+            )
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+            ON CONFLICT (purchase_line_id) DO NOTHING
+          `,
+          [
+            `${receiptId}:${index}`,
+            receiptId,
+            line.normalized_component_id,
+            line.raw_name,
+            line.quantity,
+            line.uom,
+            line.pack_size,
+            line.unit_price_rm,
+            line.total_price_rm,
+            line.confidence,
+          ],
+        );
+      }
+      return true;
+    });
   }
 
   async saveClarification(task) {

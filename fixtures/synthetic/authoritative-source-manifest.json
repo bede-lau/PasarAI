@@ -30,8 +30,8 @@
     },
     {
       "name": "recipe_components.csv",
-      "sha256": "6a631eaaa2a6dd11156e90c9a09f1d4cb58d887f19804f8e8b10391ee3c0e15b",
-      "size_bytes": 508
+      "sha256": "dab01be06ad4e4bd478905318f67207a76b0bef75fe6dc6c1308751ad3970d32",
+      "size_bytes": 584
     },
     {
       "name": "sales_history.csv",

@@ -257,6 +257,68 @@ test("Lakebase derives business dates using the merchant timezone", async () => 
   );
 });
 
+test("Lakebase persists accepted purchase receipts and lines atomically", async () => {
+  const queries = [];
+  const store = new LakebaseLedgerStore({
+    pool: fakePool(async (text, values) => {
+      queries.push({ text, values });
+      return { rows: [] };
+    }),
+  });
+
+  await store.savePurchaseReceipt({
+    receiptId: "RECEIPT-001",
+    sourceEventId: "receipt-event-001",
+    merchantId: "m_001",
+    extraction: {
+      supplier_name: "Rice Supplier",
+      date: "2026-07-12",
+      currency: "MYR",
+      total_rm: "10.00",
+      overall_confidence: "0.98",
+      line_items: [{
+        raw_name: "Rice 5kg",
+        normalized_component_id: "c_rice",
+        quantity: "1",
+        uom: "kg",
+        pack_size: "5",
+        unit_price_rm: "10.00",
+        total_price_rm: "10.00",
+        confidence: "0.98",
+      }],
+    },
+  });
+
+  assert.ok(queries.some(({ text }) => text.trim() === "BEGIN"));
+  assert.ok(queries.some(({ text }) => text.trim() === "COMMIT"));
+  const receiptInsert = queries.find(({ text }) =>
+    text.includes("INSERT INTO purchase_receipts"));
+  assert.deepEqual(receiptInsert.values, [
+    "RECEIPT-001",
+    "receipt-event-001",
+    "m_001",
+    "Rice Supplier",
+    "2026-07-12",
+    "MYR",
+    "10.00",
+    "0.98",
+  ]);
+  const lineInsert = queries.find(({ text }) =>
+    text.includes("INSERT INTO purchase_lines"));
+  assert.deepEqual(lineInsert.values, [
+    "RECEIPT-001:0",
+    "RECEIPT-001",
+    "c_rice",
+    "Rice 5kg",
+    "1",
+    "kg",
+    "5",
+    "10.00",
+    "10.00",
+    "0.98",
+  ]);
+});
+
 test("Lakebase product profiles resolve the latest state at one date boundary", async () => {
   const queries = [];
   const store = new LakebaseLedgerStore({

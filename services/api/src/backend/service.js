@@ -1486,14 +1486,14 @@ export function createPasarAiService({
       || event.evidence?.source_event_id === receiptEventId);
   }
 
-  async function receiptMaterialChanges(request) {
+  async function receiptMaterialChanges(request, occurredAt) {
     const effectiveDate =
       typeof store.getMerchantCalendarDate === "function"
         ? await store.getMerchantCalendarDate(
             request.merchant_id,
-            request.occurred_at,
+            occurredAt,
           )
-        : request.occurred_at.slice(0, 10);
+        : occurredAt.slice(0, 10);
     const changes = [];
     for (const line of request.extraction.line_items) {
       if (
@@ -2570,8 +2570,38 @@ export function createPasarAiService({
           "Receipt confirmation must reference this merchant's receipt event",
         ]);
       }
+      const clarifications = [...(request.extraction.ambiguities ?? [])];
       if (!request.extraction.supplier_name) {
-        return rejected(["Receipt supplier_name must be confirmed"]);
+        clarifications.push({
+          field: "supplier_name",
+          question: "Who supplied the items on this receipt?",
+          options: [],
+        });
+      }
+      if (!request.extraction.date) {
+        clarifications.push({
+          field: "date",
+          question: "What is the purchase date shown on this receipt?",
+          options: [],
+        });
+      }
+      if (request.extraction.total_rm === null) {
+        clarifications.push({
+          field: "total_rm",
+          question: "What is the confirmed receipt total?",
+          options: [],
+        });
+      }
+      if (clarifications.length) {
+        return {
+          state: "clarification_required",
+          clarifications: [...new Map(
+            clarifications.map((clarification) => [
+              `${clarification.field}:${clarification.question}`,
+              clarification,
+            ]),
+          ).values()],
+        };
       }
       const totalMismatch = receiptTotalMismatch(request.extraction);
       if (totalMismatch > 5n) {
@@ -2585,19 +2615,35 @@ export function createPasarAiService({
       const normalizedLines = request.extraction.line_items
         .filter((line) => line.normalized_component_id !== null);
       if (!normalizedLines.length) {
-        return rejected([
-          "Receipt has no recognized recipe-component lines to record",
-        ]);
+        return {
+          state: "clarification_required",
+          clarifications: [{
+            field: "line_items",
+            question:
+              "Map at least one receipt line to a known material before confirming.",
+            options: [],
+          }],
+        };
       }
-      const incomplete = normalizedLines.find((line) =>
-        line.quantity === null
-        || line.uom === null
-        || line.pack_size === null
-        || line.total_price_rm === null);
-      if (incomplete) {
-        return rejected([
-          `Receipt line requires quantity, unit, pack size and total before commit: ${incomplete.raw_name}`,
-        ]);
+      const incompleteIndex = request.extraction.line_items.findIndex((line) =>
+        line.normalized_component_id !== null
+        && (
+          line.quantity === null
+          || line.uom === null
+          || line.pack_size === null
+          || line.total_price_rm === null
+        ));
+      if (incompleteIndex !== -1) {
+        const incomplete = request.extraction.line_items[incompleteIndex];
+        return {
+          state: "clarification_required",
+          clarifications: [{
+            field: `line_items[${incompleteIndex}]`,
+            question:
+              `Confirm the quantity, unit, pack size and total for ${incomplete.raw_name}.`,
+            options: [],
+          }],
+        };
       }
 
       return store.runReceiptReviewMutation({
@@ -2611,10 +2657,20 @@ export function createPasarAiService({
         if (reviews.at(-1)?.payload?.review_state === "archived") {
           return rejected(["Archived receipt reviews cannot be confirmed"]);
         }
-        const materialChanges = await receiptMaterialChanges(request);
+        const costOccurredAt =
+          typeof store.getMerchantDateTime === "function"
+            ? await store.getMerchantDateTime(
+                request.merchant_id,
+                request.extraction.date,
+              )
+            : `${request.extraction.date}T12:00:00.000Z`;
+        const materialChanges = await receiptMaterialChanges(
+          request,
+          costOccurredAt,
+        );
         const response = await this.recordCost({
           merchant_id: request.merchant_id,
-          occurred_at: request.occurred_at,
+          occurred_at: costOccurredAt,
           supplier_name: request.extraction.supplier_name,
           lines: normalizedLines.map((line) => ({
             component_id: line.normalized_component_id,
@@ -2640,6 +2696,16 @@ export function createPasarAiService({
           eventEndpointId: "receipt-confirm.create",
         });
         if (response.state !== "committed") return response;
+
+        if (typeof store.savePurchaseReceipt === "function") {
+          await store.savePurchaseReceipt({
+            receiptId:
+              request.extraction.receipt_id ?? request.receipt_event_id,
+            sourceEventId: request.receipt_event_id,
+            merchantId: request.merchant_id,
+            extraction: request.extraction,
+          });
+        }
 
         const reviewEventId = `receipt-review:${response.event_id}`;
         if (!await store.getEvent(reviewEventId)) {

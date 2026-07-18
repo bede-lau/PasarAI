@@ -42,6 +42,16 @@ export function validateDemoSnapshot(snapshot = demoSnapshot) {
       throw new Error(`Duplicate demo component: ${component.component_id}`);
     }
     componentIds.add(component.component_id);
+    if (
+      !/^(?:0|[1-9][0-9]*)(?:\.[0-9]+)?$/u.test(
+        component.usage_per_product_unit,
+      )
+      || Number(component.usage_per_product_unit) <= 0
+    ) {
+      throw new Error(
+        `Invalid demo usage ratio: ${component.component_id}`,
+      );
+    }
     const baseline = cents(component.baseline_cost_per_pack_rm);
     const current = cents(component.current_cost_per_pack_rm);
     const change = cents(component.change_rm_per_pack);
@@ -310,7 +320,7 @@ export async function applyDemoSnapshot(
           snapshot_id
         )
         VALUES (
-          $1, $2, $3, $4, $5, $6, 1, $7::jsonb, $8, $9, $10
+          $1, $2, $3, $4, $5, $6, $7, $8::jsonb, $9, $10, $11
         )
       `,
       [
@@ -320,6 +330,7 @@ export async function applyDemoSnapshot(
         component.name,
         component.baseline_cost_per_pack_rm,
         component.currentCostRm,
+        component.usage_per_product_unit,
         component.evidenceProjection
           ? JSON.stringify(component.evidenceProjection)
           : null,

@@ -54,13 +54,20 @@ function goldenProfile() {
     timeZone: "Asia/Kuala_Lumpur",
     effectiveAt: "2026-07-01T00:00:00+08:00",
     components: [
-      { componentId: "c_rice", name: "Beras", baselineCostRm: "0.38", currentCostRm: "0.38" },
+      {
+        componentId: "c_rice",
+        name: "Beras",
+        baselineCostRm: "0.38",
+        currentCostRm: "0.38",
+        usagePerProductUnit: "0.1000",
+      },
       {
         componentId: "c_coconut",
         name: "Santan",
         baselineCostRm: "0.55",
         currentCostRm: "0.55",
-        usagePerProductUnit: "0.03935483870967741935483870967741935483871",
+        usagePerProductUnit:
+          "0.03935483870967741935483870967741935483871",
       },
       {
         componentId: "c_egg",
@@ -69,8 +76,20 @@ function goldenProfile() {
         currentCostRm: "0.45",
         usagePerProductUnit: "1",
       },
-      { componentId: "c_anchovy", name: "Ikan Bilis", baselineCostRm: "0.38", currentCostRm: "0.38" },
-      { componentId: "c_peanut", name: "Kacang Tanah", baselineCostRm: "0.15", currentCostRm: "0.15" },
+      {
+        componentId: "c_anchovy",
+        name: "Ikan Bilis",
+        baselineCostRm: "0.38",
+        currentCostRm: "0.38",
+        usagePerProductUnit: "0.0133",
+      },
+      {
+        componentId: "c_peanut",
+        name: "Kacang Tanah",
+        baselineCostRm: "0.15",
+        currentCostRm: "0.15",
+        usagePerProductUnit: "0.0125",
+      },
       {
         componentId: "c_sambal",
         name: "Sambal + Minyak",
@@ -78,7 +97,13 @@ function goldenProfile() {
         currentCostRm: "0.47",
         usagePerProductUnit: "0.0859375",
       },
-      { componentId: "c_cucumber", name: "Timun", baselineCostRm: "0.11", currentCostRm: "0.11" },
+      {
+        componentId: "c_cucumber",
+        name: "Timun",
+        baselineCostRm: "0.11",
+        currentCostRm: "0.11",
+        usagePerProductUnit: "0.0275",
+      },
       {
         componentId: "c_packaging",
         name: "Bekas Makanan",
@@ -86,7 +111,13 @@ function goldenProfile() {
         currentCostRm: "0.16",
         usagePerProductUnit: "1",
       },
-      { componentId: "c_fuel", name: "Gas + Condiments", baselineCostRm: "0.25", currentCostRm: "0.25" },
+      {
+        componentId: "c_fuel",
+        name: "Gas + Condiments",
+        baselineCostRm: "0.25",
+        currentCostRm: "0.25",
+        usagePerProductUnit: "0.0959",
+      },
     ],
   };
 }

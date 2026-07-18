@@ -78,12 +78,12 @@
       "source_path": "fixtures/synthetic/seed_data/recipe_components.csv",
       "authoritative_source_path": "PasarAI_Handoff_Package/demo_data/seed_data/recipe_components.csv",
       "output_path": "fixtures/synthetic/seed-output/recipe_components.csv",
-      "source_sha256": "6a631eaaa2a6dd11156e90c9a09f1d4cb58d887f19804f8e8b10391ee3c0e15b",
-      "source_size_bytes": 508,
-      "authoritative_source_sha256": "6a631eaaa2a6dd11156e90c9a09f1d4cb58d887f19804f8e8b10391ee3c0e15b",
-      "authoritative_source_size_bytes": 508,
-      "output_sha256": "47d320b7d1fed9e2869ca91ac8f0954aedd17a75cf4586cdd7c0dd61c9bee687",
-      "output_size_bytes": 498
+      "source_sha256": "dab01be06ad4e4bd478905318f67207a76b0bef75fe6dc6c1308751ad3970d32",
+      "source_size_bytes": 584,
+      "authoritative_source_sha256": "dab01be06ad4e4bd478905318f67207a76b0bef75fe6dc6c1308751ad3970d32",
+      "authoritative_source_size_bytes": 584,
+      "output_sha256": "dab01be06ad4e4bd478905318f67207a76b0bef75fe6dc6c1308751ad3970d32",
+      "output_size_bytes": 584
     },
     {
       "name": "sales_history.csv",

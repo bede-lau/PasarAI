@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import { test } from "node:test";
 
 import {
@@ -11,6 +12,17 @@ import {
 } from "../src/backend/index.js";
 
 const merchantId = "m_kak_lina_001";
+const demoSnapshot = JSON.parse(await readFile(
+  new URL("../../../fixtures/demo/current-snapshot.json", import.meta.url),
+  "utf8",
+));
+const newPurchaseReceipts = JSON.parse(await readFile(
+  new URL(
+    "../../../PasarAI_Handoff_Package/demo_data/new_purchase_receipt_ground_truth.json",
+    import.meta.url,
+  ),
+  "utf8",
+));
 
 function productProfile({
   profileMerchantId = merchantId,
@@ -177,6 +189,59 @@ test("camelCase cost clarification and receipt ingestion pass Lakebase merchant 
     "cost-changes.create",
     "receipt-upload.create",
   ]);
+});
+
+test("receipt upload records evidence without changing costs before confirmation", async () => {
+  const store = new InMemoryLedgerStore({
+    productProfiles: [productProfile()],
+  });
+  const before = store.getProductProfile("p_nlb_001", { merchantId });
+  const receiptIngestion = createReceiptUploadIngestion({
+    store,
+    evidenceStore: createInMemoryEvidenceStore(),
+    idFactory: () => "receipt-review-only-001",
+    receiptExtractor: {
+      async extract() {
+        return {
+          receipt_id: "RECEIPT-REVIEW-ONLY-001",
+          supplier_name: "Pack Supplier",
+          date: "2026-07-16",
+          currency: "MYR",
+          line_items: [{
+            raw_name: "Food containers",
+            normalized_component_id: "c_packaging",
+            quantity: "1",
+            uom: "bundle",
+            pack_size: "50",
+            unit_price_rm: "10.00",
+            total_price_rm: "10.00",
+            confidence: "0.99",
+          }],
+          total_rm: "10.00",
+          overall_confidence: "0.99",
+          ambiguities: [],
+        };
+      },
+    },
+  });
+
+  const response = await receiptIngestion.extract({
+    merchant_id: merchantId,
+    occurred_at: "2026-07-16T08:10:00+08:00",
+    file_name: "receipt.jpg",
+    content_type: "image/jpeg",
+    content_base64: Buffer.from("ffd8ffd9", "hex").toString("base64"),
+  }, { idempotencyKey: "receipt-review-only-key" });
+
+  assert.equal(response.state, "ready_for_review");
+  assert.equal(store.listEvents({ type: "receipt" }).length, 1);
+  assert.equal(store.listEvents({ type: "cost" }).length, 0);
+  assert.equal(store.listEvents({ type: "receipt_review" }).length, 0);
+  assert.equal(store.listPurchaseReceipts({ merchantId }).length, 0);
+  assert.deepEqual(
+    store.getProductProfile("p_nlb_001", { merchantId }),
+    before,
+  );
 });
 
 test("cost increases append raw events while corrections use appendCorrection", async () => {
@@ -424,6 +489,306 @@ test("receipt confirmation owns its endpoint idempotency and total boundary", as
   assert.match(
     conflict.errors[0].message,
     /Idempotency-Key was already used with a different request payload/,
+  );
+});
+
+test("receipt confirmation requires all extraction ambiguities to be resolved", async () => {
+  const store = new InMemoryLedgerStore({
+    productProfiles: [productProfile()],
+  });
+  await store.appendEvent({
+    eventId: "receipt-ambiguous-001",
+    type: "receipt",
+    merchantId,
+    occurredAt: "2026-07-16T08:10:00+08:00",
+    payload: {},
+    evidence: {},
+    response: { state: "review_required" },
+  });
+  const before = store.getProductProfile("p_nlb_001", { merchantId });
+  const service = createPasarAiService({ store });
+
+  const response = await service.confirmReceipt({
+    merchant_id: merchantId,
+    receipt_event_id: "receipt-ambiguous-001",
+    occurred_at: "2026-07-18T08:15:00+08:00",
+    extraction: {
+      receipt_id: "RECEIPT-AMBIGUOUS-001",
+      supplier_name: "Pack Supplier",
+      date: "2026-07-16",
+      currency: "MYR",
+      line_items: [{
+        raw_name: "Food containers",
+        normalized_component_id: "c_packaging",
+        quantity: "1",
+        uom: "bundle",
+        pack_size: "50",
+        unit_price_rm: "10.00",
+        total_price_rm: "10.00",
+        confidence: "0.70",
+      }],
+      total_rm: "10.00",
+      overall_confidence: "0.70",
+      ambiguities: [{
+        field: "line_items[0].pack_size",
+        question: "Is this bundle 50 or 100 containers?",
+        options: ["50", "100"],
+      }],
+    },
+  }, { idempotencyKey: "receipt-ambiguous-confirm-key" });
+
+  assert.equal(response.state, "clarification_required");
+  assert.deepEqual(response.clarifications, [{
+    field: "line_items[0].pack_size",
+    question: "Is this bundle 50 or 100 containers?",
+    options: ["50", "100"],
+  }]);
+  assert.equal(store.listEvents({ type: "cost" }).length, 0);
+  assert.equal(store.listEvents({ type: "receipt_review" }).length, 0);
+  assert.equal(store.listPurchaseReceipts({ merchantId }).length, 0);
+  assert.deepEqual(
+    store.getProductProfile("p_nlb_001", { merchantId }),
+    before,
+  );
+});
+
+test("receipt confirmation uses its purchase date and recipe usage ratios", async () => {
+  const store = new InMemoryLedgerStore({
+    merchantTimeZones: { [merchantId]: "Asia/Kuala_Lumpur" },
+    productProfiles: [
+      {
+        merchantId,
+        productId: "p_usage_100g",
+        baselineUnitCogsRm: "0.30",
+        currentUnitCogsRm: "0.30",
+        effectiveAt: "2026-07-10T00:00:00+08:00",
+        components: [{
+          componentId: "c_rice",
+          name: "Beras",
+          baselineCostRm: "0.30",
+          currentCostRm: "0.30",
+          usagePerProductUnit: "0.10",
+        }],
+      },
+      {
+        merchantId,
+        productId: "p_usage_200g",
+        baselineUnitCogsRm: "0.60",
+        currentUnitCogsRm: "0.60",
+        effectiveAt: "2026-07-10T00:00:00+08:00",
+        components: [{
+          componentId: "c_rice",
+          name: "Beras",
+          baselineCostRm: "0.60",
+          currentCostRm: "0.60",
+          usagePerProductUnit: "0.20",
+        }],
+      },
+    ],
+  });
+  await store.appendEvent({
+    eventId: "receipt-dated-001",
+    type: "receipt",
+    merchantId,
+    occurredAt: "2026-07-18T08:10:00+08:00",
+    payload: {},
+    evidence: { asset_uri: "memory://receipt-dated-001" },
+    response: { state: "ready_for_review" },
+  });
+  const service = createPasarAiService({
+    store,
+    idFactory: () => "cost-receipt-dated-001",
+  });
+
+  const response = await service.confirmReceipt({
+    merchant_id: merchantId,
+    receipt_event_id: "receipt-dated-001",
+    occurred_at: "2026-07-18T08:15:00+08:00",
+    extraction: {
+      receipt_id: "RECEIPT-DATED-001",
+      supplier_name: "Rice Supplier",
+      date: "2026-07-12",
+      currency: "MYR",
+      line_items: [{
+        raw_name: "Rice 5kg",
+        normalized_component_id: "c_rice",
+        quantity: "1",
+        uom: "kg",
+        pack_size: "5",
+        unit_price_rm: "10.00",
+        total_price_rm: "10.00",
+        confidence: "0.98",
+      }],
+      total_rm: "10.00",
+      overall_confidence: "0.98",
+      ambiguities: [],
+    },
+  }, { idempotencyKey: "receipt-dated-confirm-key" });
+
+  assert.deepEqual(response, {
+    state: "committed",
+    event_id: "cost-receipt-dated-001",
+  });
+  const costEvent = store.getEvent("cost-receipt-dated-001");
+  assert.equal(costEvent.occurredAt, "2026-07-12T04:00:00.000Z");
+  assert.equal(store.listEvents({
+    merchantId,
+    type: "cost",
+    date: "2026-07-12",
+  }).length, 1);
+  assert.equal(store.listEvents({
+    merchantId,
+    type: "cost",
+    date: "2026-07-18",
+  }).length, 0);
+  assert.equal(
+    store.getProductProfile("p_usage_100g", {
+      merchantId,
+      asOfDate: "2026-07-11",
+    }).currentUnitCogsRm,
+    "0.30",
+  );
+  assert.equal(
+    store.getProductProfile("p_usage_100g", {
+      merchantId,
+      asOfDate: "2026-07-12",
+    }).currentUnitCogsRm,
+    "0.2",
+  );
+  assert.equal(
+    store.getProductProfile("p_usage_200g", {
+      merchantId,
+      asOfDate: "2026-07-12",
+    }).currentUnitCogsRm,
+    "0.4",
+  );
+
+  const [receipt] = store.listPurchaseReceipts({ merchantId });
+  assert.equal(receipt.receiptId, "RECEIPT-DATED-001");
+  assert.equal(receipt.sourceEventId, "receipt-dated-001");
+  assert.equal(receipt.receiptDate, "2026-07-12");
+  assert.equal(receipt.reviewState, "accepted");
+  assert.equal(receipt.lines.length, 1);
+  assert.equal(receipt.lines[0].componentId, "c_rice");
+
+  const history = await service.getReceiptReviews({ merchantId });
+  assert.equal(history.receipts[0].review_state, "verified");
+  assert.deepEqual(
+    history.receipts[0].material_changes.map((change) => ({
+      product_id: change.product_id,
+      previous_cost_rm_per_pack: change.previous_cost_rm_per_pack,
+      current_cost_rm_per_pack: change.current_cost_rm_per_pack,
+    })),
+    [
+      {
+        product_id: "p_usage_100g",
+        previous_cost_rm_per_pack: "0.30",
+        current_cost_rm_per_pack: "0.20",
+      },
+      {
+        product_id: "p_usage_200g",
+        previous_cost_rm_per_pack: "0.60",
+        current_cost_rm_per_pack: "0.40",
+      },
+    ],
+  );
+});
+
+test("receipts 004 through 009 update every mapped material in sequence", async () => {
+  let costSequence = 0;
+  const store = new InMemoryLedgerStore({
+    productProfiles: [{
+      merchantId,
+      productId: demoSnapshot.product.product_id,
+      baselineUnitCogsRm: demoSnapshot.metrics.baseline_unit_cogs_rm,
+      currentUnitCogsRm: demoSnapshot.metrics.current_unit_cogs_rm,
+      effectiveAt: "2026-07-12T00:00:00+08:00",
+      components: demoSnapshot.components.map((component) => ({
+        componentId: component.component_id,
+        name: component.name,
+        baselineCostRm: component.baseline_cost_per_pack_rm,
+        currentCostRm: component.current_cost_per_pack_rm,
+        usagePerProductUnit: component.usage_per_product_unit,
+      })),
+    }],
+  });
+  const service = createPasarAiService({
+    store,
+    idFactory: () => {
+      costSequence += 1;
+      return `cost-new-receipt-${costSequence}`;
+    },
+  });
+  const orderedReceipts = Object.values(newPurchaseReceipts)
+    .sort((left, right) => left.demo_order - right.demo_order);
+
+  for (const receipt of orderedReceipts) {
+    const receiptEventId = `receipt-event-${receipt.receipt_id}`;
+    const extraction = {
+      receipt_id: receipt.receipt_id,
+      supplier_name: receipt.supplier_name,
+      date: receipt.date,
+      currency: receipt.currency,
+      line_items: receipt.line_items.map((line) => ({
+        raw_name: line.raw_name,
+        normalized_component_id: line.normalized_component_id,
+        quantity: String(line.quantity),
+        uom: line.uom,
+        pack_size: line.pack_size === null ? null : String(line.pack_size),
+        unit_price_rm: Number(line.unit_price_rm).toFixed(2),
+        total_price_rm: Number(line.total_price_rm).toFixed(2),
+        confidence: "0.98",
+      })),
+      total_rm: Number(receipt.total_rm).toFixed(2),
+      overall_confidence: "0.98",
+      ambiguities: [],
+    };
+    await store.appendEvent({
+      eventId: receiptEventId,
+      type: "receipt",
+      merchantId,
+      occurredAt: `${receipt.date}T08:00:00+08:00`,
+      payload: { extraction },
+      evidence: { asset_uri: `memory://${receipt.receipt_id}` },
+      response: { state: "ready_for_review" },
+    });
+
+    const response = await service.confirmReceipt({
+      merchant_id: merchantId,
+      receipt_event_id: receiptEventId,
+      occurred_at: `${receipt.date}T09:00:00+08:00`,
+      extraction,
+    }, { idempotencyKey: `confirm-${receipt.receipt_id}` });
+
+    assert.equal(response.state, "committed", receipt.receipt_id);
+  }
+
+  const profile = store.getProductProfile(demoSnapshot.product.product_id, {
+    merchantId,
+    asOfDate: "2026-07-16",
+  });
+  const costs = Object.fromEntries(profile.components.map((component) => [
+    component.componentId,
+    component.currentCostRm,
+  ]));
+  assert.deepEqual(costs, {
+    c_anchovy: "0.4123",
+    c_coconut: "0.62252",
+    c_cucumber: "0.12375",
+    c_egg: "0.56",
+    c_fuel: "0.250025",
+    c_packaging: "0.21",
+    c_peanut: "0.16875",
+    c_rice: "0.34",
+    c_sambal: "0.58412",
+  });
+  assert.equal(store.listPurchaseReceipts({ merchantId }).length, 6);
+  assert.equal(
+    store.listPurchaseReceipts({ merchantId })
+      .flatMap((receipt) => receipt.lines)
+      .filter((line) => line.componentId === null)
+      .length,
+    4,
   );
 });
 
