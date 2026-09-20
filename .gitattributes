@@ -1,0 +1,3 @@
+# Synthetic fixtures mirror an authoritative snapshot byte for byte.
+# Git must never rewrite their line endings on checkout or check-in.
+fixtures/synthetic/** -text

@@ -16,6 +16,7 @@ const excludedTopLevel = new Set([
 ]);
 const allowedRootFiles = new Set([
   ".env.example",
+  ".gitattributes",
   ".gitignore",
   ".npmrc",
   "DESIGN.md",
