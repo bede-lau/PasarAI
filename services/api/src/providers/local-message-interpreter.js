@@ -95,7 +95,7 @@ const NUMBER_REPLACEMENTS = [
   ["satu", "1"],
 ];
 
-const MALAY_TERMS = /\b(?:hari ni|habis|bungkus|jual|naik|telur|bekas|santan|beras|timun)\b/i;
+const MALAY_TERMS = /\b(?:hari ni|habis|bungkus|jual|naik|telur|bekas|santan|beras|timun|tolong|sila|berapa|harga|kedai|tengok|semalam|sikit)\b/i;
 const ENGLISH_TERMS = /\b(?:today|sold|packaging|cost|ringgit|bought|customer|at|each)\b/i;
 const BUSINESS_QUERY_CUES =
   /\b(?:how|what|show|tell|looking|today|now|current|berapa|bagaimana|macam mana|hari ini|sekarang)\b|(?:怎样|怎么样|如何|多少|情况|现在|今天|目前)|[?？]/iu;

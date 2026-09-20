@@ -1349,6 +1349,23 @@ function unreadableAmountReply(language) {
   return replies[language] ?? replies.en;
 }
 
+function uninterpretedReply(language) {
+  const replies = {
+    en:
+      "I did not catch that. Tell me the product, how many, and the price, "
+      + "or ask about today's sales, costs, or margin.",
+    ms:
+      "Saya tidak faham mesej itu. Beritahu produk, berapa banyak dan harga, "
+      + "atau tanya tentang jualan, kos atau margin hari ini.",
+    zh:
+      "我没有看懂这条消息。"
+      + "请告诉我商品、数量和"
+      + "价格，或者问我今天的"
+      + "营业额、成本或毛利。",
+  };
+  return replies[language] ?? replies.en;
+}
+
 function invalidDateReply(language) {
   const replies = {
     en:
@@ -1545,9 +1562,7 @@ function replyLinesForOperation(endpointId, result) {
     if (result.clarifications?.length) {
       return result.clarifications.map(({ question }) => question);
     }
-    return [
-      "I couldn't tell what you wanted me to check. Please rephrase it in one short sentence.",
-    ];
+    return [uninterpretedReply(result.reply_language ?? "en")];
   }
   if (result.state === "rejected") {
     if (result.reason === "invalid_receipt_image") {
@@ -2127,6 +2142,9 @@ export function createTelegramIngestion({
       return {
         state: "review_required",
         reason: "interpretation_required",
+        reply_language: trustedVoiceLanguage({ source, sourceLanguage })
+          ?.replyLanguage
+          ?? detectReplyLanguage(text, sourceLanguage),
       };
     }
 

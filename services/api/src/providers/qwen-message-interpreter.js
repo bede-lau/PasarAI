@@ -45,22 +45,28 @@ function operationsFromToolCalls(toolCalls, {
   occurredAt,
   source,
   sourceLanguage,
+  reject,
 }) {
   const operations = [];
   for (const toolCall of toolCalls) {
     const name = toolCall?.function?.name;
     const tool = toolsByName.get(name);
     if (!tool || typeof toolCall?.function?.arguments !== "string") {
+      reject("unknown_tool", { tool: typeof name === "string" ? name : null });
       return null;
     }
     let parsedInput;
     try {
       parsedInput = JSON.parse(toolCall.function.arguments);
     } catch {
+      reject("invalid_tool_arguments", { tool: name });
       return null;
     }
     const input = sanitizeToolInput(name, parsedInput);
-    if (!validatesSchema(tool.input_schema, input)) return null;
+    if (!validatesSchema(tool.input_schema, input)) {
+      reject("schema_invalid", { tool: name });
+      return null;
+    }
     const operation = operationWithTrustedVoiceLanguage(
       operationForToolUse({ name, input }, {
         occurredAt,
@@ -68,7 +74,10 @@ function operationsFromToolCalls(toolCalls, {
       }),
       { source, sourceLanguage },
     );
-    if (!operation) return null;
+    if (!operation) {
+      reject("unsupported_operation", { tool: name });
+      return null;
+    }
     operations.push(operation);
   }
   return operations;
@@ -109,27 +118,29 @@ function namesCatalogEntry(text, entries, entryId) {
     );
 }
 
-function groundedOperations(selected, { text, source, products }) {
+function groundingRejection(selected, { text, source, products }) {
   const operations = Array.isArray(selected) ? selected : [selected];
   for (const operation of operations) {
     if (operation?.endpoint_id === "sales.create") {
       const lines = operation.payload?.lines;
-      if (!plausibleSaleLines(lines)) return null;
+      if (!plausibleSaleLines(lines)) return "implausible_sale_numbers";
       if (
         source === "telegram_text"
         && !lines.every(({ product_id: productId }) =>
           namesCatalogEntry(text, products, productId)
         )
       ) {
-        return null;
+        return "unnamed_product";
       }
     }
     if (operation?.endpoint_id === "cost-changes.create") {
       const increase = Number.parseFloat(operation.payload?.increase_rm);
-      if (!Number.isFinite(increase) || increase <= 0) return null;
+      if (!Number.isFinite(increase) || increase <= 0) {
+        return "non_positive_cost_change";
+      }
     }
   }
-  return selected;
+  return null;
 }
 
 function isDeterministicRetrieval(operation) {
@@ -177,10 +188,15 @@ function isHighConfidenceTextFastPath(operation, source) {
   );
 }
 
+function defaultRejectionLogger(reason, detail) {
+  console.warn("Telegram interpretation rejected", { reason, ...detail });
+}
+
 export function createMessageInterpreter({
   environment = process.env,
   fetchImpl = fetch,
   now = () => new Date().toISOString(),
+  onRejection = defaultRejectionLogger,
 } = {}) {
   if (typeof fetchImpl !== "function") {
     throw new Error("fetchImpl is required");
@@ -220,6 +236,13 @@ export function createMessageInterpreter({
 
     async interpret(input) {
       if (typeof input?.text !== "string" || !input.text.trim()) return null;
+      const reject = (reason, detail = {}) => {
+        try {
+          onRejection(reason, { source: input.source ?? null, ...detail });
+        } catch {
+          // Diagnostics must never block interpretation.
+        }
+      };
       const localResult = await local.interpret(input);
       if (
         isDeterministicRetrieval(localResult)
@@ -288,14 +311,19 @@ export function createMessageInterpreter({
             signal: AbortSignal.timeout(timeoutMs),
           });
         } catch {
+          reject("request_failed", { model });
           continue;
         }
-        if (!response.ok) continue;
+        if (!response.ok) {
+          reject("http_error", { model, status: response.status });
+          continue;
+        }
 
         let payload;
         try {
           payload = await response.json();
         } catch {
+          reject("invalid_response_body", { model });
           continue;
         }
         const operations = operationsFromToolCalls(
@@ -305,19 +333,27 @@ export function createMessageInterpreter({
             occurredAt,
             source: input.source,
             sourceLanguage: input.sourceLanguage,
+            reject: (reason, detail) => reject(reason, { model, ...detail }),
           },
         );
         const selected = operations ? selectOperations(operations) : null;
-        const grounded = selected
-          ? groundedOperations(selected, {
-              text: input.text,
-              source: input.source,
-              products: activeCatalog.products,
-            })
-          : null;
-        if (grounded) return grounded;
+        if (operations && !selected) {
+          reject("unsafe_selection", { model });
+          continue;
+        }
+        if (!selected) continue;
+        const rejection = groundingRejection(selected, {
+          text: input.text,
+          source: input.source,
+          products: activeCatalog.products,
+        });
+        if (!rejection) return selected;
+        reject(rejection, { model });
       }
 
+      reject("no_verified_operation", {
+        fallback: localResult ? "deterministic" : "none",
+      });
       return localResult;
     },
   };

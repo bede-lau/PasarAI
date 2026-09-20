@@ -120,3 +120,13 @@ gate: a sale must carry plausible numbers, a text message must actually name
 the product it books, and a cost change must carry a positive increase. A tool
 call that fails any of these is discarded rather than corrected, so an
 unverifiable amount can never become a pending mutation.
+
+Every discard is reported rather than swallowed. The model interpreter emits a
+tagged reason for each rejection - `request_failed`, `http_error`,
+`invalid_response_body`, `unknown_tool`, `invalid_tool_arguments`,
+`schema_invalid`, `unsupported_operation`, `unsafe_selection`,
+`implausible_sale_numbers`, `unnamed_product`, `non_positive_cost_change`, and
+a final `no_verified_operation` naming the fallback that was used. Diagnostics
+never block interpretation, and a message that still cannot be interpreted is
+answered in the merchant's own language with one concrete next step rather than
+a generic failure line.
