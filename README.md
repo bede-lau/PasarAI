@@ -23,6 +23,35 @@ them.
 - Snapshot Lakebase data into a quota-aware Databricks Bronze, Silver, and Gold
   pipeline.
 
+## Demo
+
+Watch the recorded walkthrough:
+[PasarAI demo video](https://www.loom.com/share/70c7234b4b104fed9018b8f2cce67773)
+
+![Daily dashboard showing gross margin, revenue, cost of sales, and a
+cost-per-pack breakdown by ingredient](docs/images/dashboard-gross-margin.png)
+
+The dashboard view for a reporting day: gross margin, revenue, cost of
+sales, and a cost-per-pack breakdown by ingredient.
+
+![Receipt review screen showing the scanned receipt beside extracted
+line items awaiting confirmation](docs/images/receipt-review.png)
+
+The receipt review screen: the original evidence image next to
+extracted line items pending merchant confirmation.
+
+![Google Sheets integration panel showing connection status and sync
+controls](docs/images/google-sheets-integration.png)
+
+The Google Sheets integration panel: connection status, sync mode, and
+manual export, import, and reconcile actions.
+
+![Architecture diagram of channels, AI adapters, the Node.js API, and
+the Databricks analytics loop](docs/images/architecture-overview.png)
+
+An architecture diagram covering channels, AI adapters, the Node.js
+core, and the triggered Lakebase-to-Databricks analytics loop.
+
 ## Architecture
 
 | Area | Path | Responsibility |
