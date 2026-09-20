@@ -217,7 +217,11 @@ describe("Google Sheets settings", () => {
     expect(fetcher).toHaveBeenNthCalledWith(
       1,
       "/api/pasarai/integrations/google-sheets/export",
-      { method: "POST" }
+      {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ dates: ["2026-07-16"] })
+      }
     );
     expect(fetcher).toHaveBeenNthCalledWith(
       2,
@@ -334,7 +338,11 @@ describe("Google Sheets settings", () => {
       expect(fetcher).toHaveBeenNthCalledWith(
         1,
         "/api/pasarai/integrations/google-sheets/reconcile",
-        { method: "POST" }
+        {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ dates: ["2026-07-16"] })
+        }
       );
       expect(fetcher).toHaveBeenNthCalledWith(
         2,

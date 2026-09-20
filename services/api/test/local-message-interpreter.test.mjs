@@ -145,9 +145,88 @@ test("interprets an English expense question as a read-only daily summary", asyn
     endpoint_id: "daily-summary.get",
     payload: {
       date: "2026-07-15",
+      requested_metric: "cogs",
       reply_language: "en",
     },
   });
+});
+
+test("routes the latest Telegram revenue question to an authoritative read", async () => {
+  const operation = await interpreter().interpret({
+    text: "What is the revenue for today?",
+    source: "telegram_voice",
+    sourceLanguage: "eng",
+    occurredAt,
+  });
+
+  assert.deepEqual(operation, {
+    endpoint_id: "daily-summary.get",
+    payload: {
+      date: "2026-07-15",
+      requested_metric: "revenue",
+      reply_language: "en",
+    },
+  });
+});
+
+test("routes Telegram trend questions to bounded business reads", async () => {
+  const cases = [
+    {
+      text: "What are the trends looking like for my business?",
+      expected: {
+        endpoint_id: "business-trend.get",
+        payload: {
+          from: "2026-07-09",
+          to: "2026-07-15",
+          requested_metric: "overview",
+          reply_language: "en",
+        },
+      },
+    },
+    {
+      text: "What are the trends looking like for my product?",
+      expected: {
+        endpoint_id: "business-trend.get",
+        payload: {
+          from: "2026-07-09",
+          to: "2026-07-15",
+          requested_metric: "overview",
+          reply_language: "en",
+        },
+      },
+    },
+    {
+      text: "What is the revenue trend looking like for Nasi Lemak Biasa?",
+      expected: {
+        endpoint_id: "business-trend.get",
+        payload: {
+          from: "2026-07-09",
+          to: "2026-07-15",
+          requested_metric: "revenue",
+          product_id: "p_nlb_001",
+          reply_language: "en",
+        },
+      },
+    },
+  ];
+
+  for (const scenario of cases) {
+    assert.deepEqual(await interpreter().interpret({
+      text: scenario.text,
+      source: "telegram_voice",
+      sourceLanguage: "eng",
+      occurredAt,
+    }), scenario.expected);
+  }
+});
+
+test("does not turn a what-if price question into a sale fallback", async () => {
+  assert.equal(await interpreter().interpret({
+    text: "What if I sell 35 nasi lemak biasa at RM5.50?",
+    source: "telegram_text",
+    sourceLanguage: "en",
+    occurredAt,
+  }), null);
 });
 
 test("recovers the latest Scribe expense-intent transcription error", async () => {
@@ -162,6 +241,7 @@ test("recovers the latest Scribe expense-intent transcription error", async () =
     endpoint_id: "daily-summary.get",
     payload: {
       date: "2026-07-15",
+      requested_metric: "cogs",
       reply_language: "ms",
     },
   });
@@ -179,6 +259,7 @@ test("interprets a Chinese expense question and preserves reply language", async
     endpoint_id: "daily-summary.get",
     payload: {
       date: "2026-07-15",
+      requested_metric: "cogs",
       reply_language: "zh",
     },
   });

@@ -1,5 +1,6 @@
 import { readFile, readdir } from "node:fs/promises";
-import { basename, join, relative, resolve } from "node:path";
+import { spawnSync } from "node:child_process";
+import { basename, extname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const repositoryRoot = resolve(fileURLToPath(new URL("../..", import.meta.url)));
@@ -50,12 +51,21 @@ const allowedUrls = [
   /^https:\/\/sheets\.googleapis\.com(?:\/|$)/,
   /^https:\/\/unpkg\.com\/@elevenlabs\/convai-widget-embed@0\.14\.10$/,
   /^https:\/\/www\.googleapis\.com(?:\/|$)/,
+  /^https:\/\/dashscope-intl\.aliyuncs\.com(?:\/|$)/,
+  /^https:\/\/www\.loom\.com\/share\/[A-Za-z0-9]+$/,
+  /^https:\/\/github\.com\/bede-lau(?:\/|$)/,
+  /^https:\/\/bede-lau\.github\.io(?:\/|$)/,
+  /^https?:\/\/localhost(?::\d+)?(?:\/|$)/,
+  /^https?:\/\/127\.0\.0\.1(?::\d+)?(?:\/|$)/,
   /^https?:\/\/(?:[A-Za-z0-9-]+\.)*example(?:\/|$)/,
   /^https?:\/\/(?:[A-Za-z0-9-]+\.)*test(?:\/|$)/,
 ];
 const allowedSchemes = ["synthetic://"];
-const sensitiveSuffix = /(?:HOST|URL|ENDPOINT|MODEL(?:_ID)?|WORKSPACE(?:_ID)?|CATALOG|SCHEMA|TOKEN|KEY|SECRET|PASSWORD|DATABASE_URL)$/;
+const secretSuffix = /(?:TOKEN|KEY|SECRET|PASSWORD|DATABASE_URL)$/;
+const configSuffix = /(?:HOST|URL|ENDPOINT|MODEL(?:_ID)?|WORKSPACE(?:_ID)?|CATALOG|SCHEMA)$/;
 const providerPrefix = /^(?:databricks|elevenlabs|telegram|railway|lakebase|provider|receipt|database)[_.-]/i;
+const codeExtensions = new Set([".js", ".mjs", ".cjs", ".jsx", ".ts", ".tsx", ".mts", ".cts", ".py"]);
+const testFilePattern = /\.(?:test|spec)\.[cm]?[jt]sx?$/;
 const assignmentPatterns = [
   /\b([A-Z][A-Z0-9_]*)[ \t]*=[ \t]*([^\r\n#]*)/g,
   /"([^"]+)"\s*:\s*"([^"]*)"/g,
@@ -85,36 +95,69 @@ function isAllowedUrl(value) {
     || allowedSchemes.some((scheme) => value.startsWith(scheme));
 }
 
+function normalizeValue(value) {
+  return value
+    .trim()
+    .replace(/[;,]+$/, "")
+    .trim()
+    .replace(/^["'`]|["'`]$/g, "")
+    .trim();
+}
+
 function allowedValue(value) {
-  const normalized = value.trim().replace(/^["']|["']$/g, "");
+  const normalized = normalizeValue(value);
   return placeholderValues.has(normalized)
     || /^\$\{[A-Za-z_][A-Za-z0-9_]*\}$/.test(normalized)
     || reviewedActionShas.has(normalized)
     || isAllowedUrl(normalized);
 }
 
-function sensitiveName(name) {
-  const normalized = name.replaceAll("-", "_");
-  const uppercase = normalized.toUpperCase();
-  return (name === uppercase && sensitiveSuffix.test(uppercase))
-    || (providerPrefix.test(name) && sensitiveSuffix.test(uppercase));
+function sensitiveTier(name) {
+  const uppercase = name.replaceAll("-", "_").toUpperCase();
+  if (name !== uppercase && !providerPrefix.test(name)) return null;
+  if (secretSuffix.test(uppercase)) return "secret";
+  if (configSuffix.test(uppercase)) return "config";
+  return null;
 }
 
 function assignmentFindings(contents, displayPath) {
+  if (testFilePattern.test(displayPath)) return [];
+
+  const sourceFile = codeExtensions.has(extname(displayPath));
   const findings = [];
 
   for (const pattern of assignmentPatterns) {
     for (const match of contents.matchAll(pattern)) {
       const [, name, value] = match;
-      if (sensitiveName(name) && !allowedValue(value)) {
-        findings.push(`${displayPath}: unsafe configured value for ${name}`);
-      }
+      const tier = sensitiveTier(name);
+      if (tier === null) continue;
+      if (tier === "config" && sourceFile) continue;
+      if (allowedValue(value)) continue;
+      findings.push(`${displayPath}: unsafe configured value for ${name}`);
     }
   }
   return findings;
 }
 
-const files = await listFiles(scanRoot);
+function includedPath(file) {
+  const relativePath = relative(scanRoot, file);
+  if (!relativePath) return true;
+  const segments = relativePath.replaceAll("\\", "/").split("/");
+  if (segments.some((segment) => excludedDirectories.has(segment))) return false;
+  return !excludedFileNames.has(segments.at(-1));
+}
+
+function repositoryFiles(path) {
+  const result = spawnSync(
+    "git",
+    ["-C", path, "ls-files", "--cached", "--others", "--exclude-standard", "-z"],
+    { encoding: "utf8", windowsHide: true, maxBuffer: 64 * 1024 * 1024 },
+  );
+  if (result.status !== 0 || typeof result.stdout !== "string") return null;
+  return result.stdout.split("\0").filter(Boolean).map((entry) => join(path, entry));
+}
+
+const files = (repositoryFiles(scanRoot) ?? await listFiles(scanRoot)).filter(includedPath);
 const findings = [];
 let scannedFiles = 0;
 

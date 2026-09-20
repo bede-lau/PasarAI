@@ -110,6 +110,7 @@ test("demo reset and rehearsal commands produce separated automated, manual and 
   assert.equal(reset.baseline_date, "2026-07-15");
   assert.equal(reset.baseline_unit_cogs_rm, "2.50");
   assert.equal(reset.current_unit_cogs_rm, "3.22");
+  assert.equal(reset.input_record_count, 10);
 
   const liveReset = await resetDemo({
     resetLiveServices: true,
@@ -119,9 +120,11 @@ test("demo reset and rehearsal commands produce separated automated, manual and 
       baselineDate: "2026-07-15",
       baselineUnitCogsRm: "2.50",
       currentUnitCogsRm: "3.22",
+      inputRecordCount: 10,
     }),
   });
   assert.equal(liveReset.live_services_reset, true);
+  assert.equal(liveReset.input_record_count, 10);
 
   const report = await rehearseDemo({ runs: 3 });
   assert.equal(report.automated.status, "pass");

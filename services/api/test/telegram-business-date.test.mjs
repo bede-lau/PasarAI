@@ -47,3 +47,22 @@ test("natural-language and numeric dates override the reporting fallback", () =>
     }), expected);
   }
 });
+
+test("undated and relative reads stay anchored to the demo business date", () => {
+  const occurredAt = "2026-07-18T03:00:34.000Z";
+  for (const text of [
+    "What is the revenue for today?",
+    "What are the trends looking like for my business?",
+  ]) {
+    assert.equal(resolveTelegramBusinessDate({
+      text,
+      occurredAt,
+      defaultBusinessDate: "2026-07-16",
+    }), "2026-07-16");
+  }
+  assert.equal(resolveTelegramBusinessDate({
+    text: "What was the revenue yesterday?",
+    occurredAt,
+    defaultBusinessDate: "2026-07-16",
+  }), "2026-07-15");
+});

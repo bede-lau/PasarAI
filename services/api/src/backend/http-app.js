@@ -259,6 +259,7 @@ export function createApiApp({
           return json(await googleSheetsIntegration.exportMetrics({
             merchantId: auth.merchantId,
             dates: payload.dates,
+            productId: payload.product_id,
           }, { idempotencyKey }));
         }
 
@@ -291,12 +292,14 @@ export function createApiApp({
               message: "Google Sheets integration is not configured.",
             }, 503);
           }
-          const { idempotencyKey } = await googleSheetsMutation(
+          const { payload, idempotencyKey } = await googleSheetsMutation(
             request,
             "google-sheets.reconcile",
           );
           return json(await googleSheetsIntegration.reconcile({
             merchantId: auth.merchantId,
+            dates: payload.dates,
+            productId: payload.product_id,
           }, { idempotencyKey }));
         }
 
@@ -635,6 +638,12 @@ export function createApiApp({
             message: error.message,
           }, error.status);
         }
+        // Surface the stack server-side so 500s are diagnosable. The client
+        // still receives a generic error without leaking internals.
+        console.error(
+          `[api] internal_error ${request.method} ${url.pathname}`,
+          error?.stack ?? error,
+        );
         return json({ error: "internal_error" }, 500);
       }
     },

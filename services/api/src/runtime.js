@@ -98,6 +98,7 @@ export function createProductionDependencyMap({
   messageInterpreter,
   telegramConfigured,
   scribeConfigured,
+  transcriber,
   googleSheetsIntegration,
 }) {
   return {
@@ -106,7 +107,7 @@ export function createProductionDependencyMap({
     receipt_extractor: dependencyProbe(receiptExtractor),
     message_interpreter: dependencyProbe(messageInterpreter),
     telegram: dependencyProbe(null, telegramConfigured),
-    scribe: dependencyProbe(null, scribeConfigured),
+    scribe: dependencyProbe(transcriber, scribeConfigured),
     google_sheets: dependencyProbe(googleSheetsIntegration),
   };
 }
@@ -193,6 +194,8 @@ export async function createProductionRuntime({
           key: environment.GOOGLE_TOKEN_ENCRYPTION_KEY,
         }),
         webhookUrl: environment.GOOGLE_SHEETS_WEBHOOK_URL,
+        defaultProductId: environment.PASARAI_PRODUCT_ID,
+        defaultReportingDate: environment.PASARAI_DASHBOARD_DATE,
         syncLeaseMs: positiveIntegerEnvironment(
           environment,
           "GOOGLE_SHEETS_SYNC_LEASE_MS",
@@ -223,6 +226,7 @@ export async function createProductionRuntime({
   let telegramIngestion = null;
   let telegramConfigured = false;
   let scribeConfigured = false;
+  let transcriber = null;
   if (
     environment.TELEGRAM_BOT_TOKEN
     && environment.TELEGRAM_WEBHOOK_SECRET
@@ -230,9 +234,14 @@ export async function createProductionRuntime({
     telegramConfigured = true;
     const telegramClient = createTelegramBotClient({
       botToken: environment.TELEGRAM_BOT_TOKEN,
+      timeoutMs: positiveIntegerEnvironment(
+        environment,
+        "PASARAI_TELEGRAM_TIMEOUT_MS",
+        10_000,
+      ),
     });
     scribeConfigured = Boolean(environment.ELEVENLABS_API_KEY);
-    const transcriber = environment.ELEVENLABS_API_KEY
+    transcriber = environment.ELEVENLABS_API_KEY
       ? createElevenLabsScribeTranscriber({
           apiKey: environment.ELEVENLABS_API_KEY,
           keyterms: commaSeparatedEnvironment(
@@ -267,7 +276,7 @@ export async function createProductionRuntime({
       processingLeaseMs: positiveIntegerEnvironment(
         environment,
         "PASARAI_TELEGRAM_PROCESSING_LEASE_MS",
-        60_000,
+        90_000,
       ),
       merchantResolver: async (body) =>
         configuredChatId
@@ -293,6 +302,7 @@ export async function createProductionRuntime({
       messageInterpreter,
       telegramConfigured,
       scribeConfigured,
+      transcriber,
       googleSheetsIntegration,
     }),
     telegramIngestion,

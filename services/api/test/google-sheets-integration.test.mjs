@@ -21,19 +21,24 @@ function apiUrl(path) {
   return ["http", "://", "pasarai.test", path].join("");
 }
 
-function profile() {
+function profile({
+  productId = "p_nlb_001",
+  baselineUnitCogsRm = "2.90",
+  currentUnitCogsRm = "3.18",
+  componentId = "c_egg",
+} = {}) {
   return {
     merchantId,
-    productId: "p_nlb_001",
-    baselineUnitCogsRm: "2.90",
-    currentUnitCogsRm: "3.18",
+    productId,
+    baselineUnitCogsRm,
+    currentUnitCogsRm,
     targetGrossMarginPct: "40.00",
     timeZone: "Asia/Kuala_Lumpur",
     components: [{
-      componentId: "c_egg",
-      name: "Eggs",
-      baselineCostRm: "3.18",
-      currentCostRm: "3.18",
+      componentId,
+      name: `${productId} component`,
+      baselineCostRm: baselineUnitCogsRm,
+      currentCostRm: currentUnitCogsRm,
       usagePerProductUnit: "1",
     }],
   };
@@ -53,14 +58,17 @@ function fakeGoogleClient() {
   const spreadsheets = new Map();
   const writes = [];
   const clears = [];
+  const spreadsheetUpdates = [];
   const watches = [];
   const stoppedChannels = [];
   let refreshes = 0;
+  let workbookVersion = "";
 
   const client = {
     spreadsheets,
     writes,
     clears,
+    spreadsheetUpdates,
     watches,
     stoppedChannels,
     inputValues: [],
@@ -110,6 +118,7 @@ function fakeGoogleClient() {
       return structuredClone(metadata);
     },
     async batchUpdateSpreadsheet({ spreadsheetId, requests }) {
+      spreadsheetUpdates.push(structuredClone({ spreadsheetId, requests }));
       const metadata = spreadsheets.get(spreadsheetId);
       for (const request of requests) {
         if (request.addSheet) {
@@ -129,9 +138,22 @@ function fakeGoogleClient() {
     },
     async batchUpdateValues(call) {
       writes.push(structuredClone(call));
+      for (const item of call.data) {
+        if (item.range === "Configuration!B9") {
+          workbookVersion = String(item.values?.[0]?.[0] ?? "");
+        }
+        if (item.range === "Configuration!A1:B9") {
+          workbookVersion = String(item.values?.[8]?.[1] ?? "");
+        }
+      }
       return {};
     },
-    async getValues() {
+    async getValues({ range }) {
+      if (range === "Configuration!B9") {
+        return workbookVersion
+          ? { values: [[workbookVersion]] }
+          : { values: [] };
+      }
       return { values: structuredClone(client.inputValues) };
     },
     async watchFile(call) {
@@ -155,9 +177,10 @@ async function createFixture({
   now = () => Date.parse("2026-07-16T12:00:00Z"),
   webhookUrl,
   integrationOptions = {},
+  productProfiles = [profile()],
 } = {}) {
   const ledgerStore = new InMemoryLedgerStore({
-    productProfiles: [profile()],
+    productProfiles,
   });
   const businessIds = new Map();
   const businessService = createPasarAiService({
@@ -268,6 +291,27 @@ test("phase 1 connects Google, encrypts tokens and exports deterministic metrics
       && write.data[0]?.range === "Dashboard!B3:B7"),
     true,
   );
+  const formatRequests = fixture.googleClient.spreadsheetUpdates
+    .flatMap(({ requests }) => requests);
+  assert.deepEqual(
+    formatRequests
+      .filter(({ updateSheetProperties }) => updateSheetProperties)
+      .map(({ updateSheetProperties }) =>
+        updateSheetProperties.properties.sheetId)
+      .sort((left, right) => left - right),
+    [1, 2, 3, 4, 5],
+  );
+  assert.equal(fixture.googleClient.spreadsheetUpdates.length, 1);
+  assert.equal(
+    formatRequests.some(({ setBasicFilter }) =>
+      setBasicFilter?.filter?.range?.sheetId === 2),
+    true,
+  );
+  assert.equal(
+    formatRequests.some(({ setDataValidation }) =>
+      setDataValidation?.range?.sheetId === 3),
+    true,
+  );
   const metrics = fixture.googleClient.writes
     .flatMap(({ data }) => data)
     .findLast(({ range }) => range.startsWith("Metrics!"));
@@ -279,16 +323,139 @@ test("phase 1 connects Google, encrypts tokens and exports deterministic metrics
     "Gross Margin (%)",
   ]);
   assert.deepEqual(metrics.values[1].slice(0, 6), [
-    "2026-07-16",
-    "50.00",
-    "31.80",
-    "18.20",
-    "36.40",
+    46219,
+    50,
+    31.8,
+    18.2,
+    36.4,
     "complete",
   ]);
+  const inputs = fixture.googleClient.writes
+    .flatMap(({ data }) => data)
+    .findLast(({ range }) => range.startsWith("Inputs!A2:"));
+  assert.equal(inputs.values.length, 1);
+  assert.equal(inputs.values[0][0], "UPDATE");
+  assert.equal(inputs.values[0][1], "sale");
+  assert.equal(inputs.values[0][13], "synced");
+  assert.equal(inputs.values[0][14], "sale_1");
+  assert.equal(
+    fixture.integrationStore.listRowStates({
+      merchantId,
+      sheetName: "Inputs",
+    }).length,
+    1,
+  );
   assert.equal(
     fixture.integrationStore.getSyncJob(exported.job_id).status,
     "completed",
+  );
+});
+
+test("Metrics and Dashboard stay scoped to the frontend product and date", async () => {
+  const fixture = await createFixture({
+    productProfiles: [
+      profile(),
+      profile({
+        productId: "p_other_001",
+        baselineUnitCogsRm: "4.00",
+        currentUnitCogsRm: "4.50",
+        componentId: "c_other",
+      }),
+    ],
+  });
+  await fixture.businessService.recordSale({
+    merchant_id: merchantId,
+    occurred_at: "2026-07-16T11:00:00+08:00",
+    source: "web_manual",
+    source_language: "en",
+    lines: [{
+      product_id: "p_other_001",
+      quantity: "100",
+      unit_price_rm: "9.00",
+    }],
+    evidence: { source_event_id: "other-product-sale" },
+  }, {
+    idempotencyKey: "other-product-sale",
+  });
+  await connect(fixture.integration);
+
+  await fixture.integration.exportMetrics({
+    merchantId,
+    dates: ["2026-07-16"],
+    productId: "p_nlb_001",
+  });
+
+  const dashboard = fixture.googleClient.writes
+    .flatMap(({ data }) => data)
+    .findLast(({ range }) => range === "Dashboard!A1:B9");
+  assert.deepEqual(dashboard.values[1], ["Product scope", "p_nlb_001"]);
+  const metrics = fixture.googleClient.writes
+    .flatMap(({ data }) => data)
+    .findLast(({ range }) => range.startsWith("Metrics!"));
+  assert.deepEqual(metrics.values[1].slice(1, 5), [
+    50,
+    31.8,
+    18.2,
+    36.4,
+  ]);
+});
+
+test("database costs hydrate Inputs as synchronized records without replacing user rows", async () => {
+  const fixture = await createFixture();
+  await fixture.businessService.recordCost({
+    merchant_id: merchantId,
+    occurred_at: "2026-07-16T08:00:00+08:00",
+    source: "web_manual",
+    source_language: "en",
+    supplier_name: "Morning Market",
+    metadata: {
+      payment_method: "cash",
+      note: "Egg restock",
+    },
+    lines: [{
+      component_id: "c_egg",
+      quantity: "2",
+      uom: "tray",
+      pack_size: "30",
+      total_price_rm: "24.00",
+      confidence: "1.00",
+    }],
+    evidence: { source_event_id: "database-cost-seed" },
+  }, {
+    idempotencyKey: "database-cost-seed",
+  });
+  await connect(fixture.integration);
+
+  const hydrated = fixture.googleClient.writes
+    .flatMap(({ data }) => data)
+    .findLast(({ range }) => range.startsWith("Inputs!A2:"));
+  assert.equal(hydrated.values.length, 2);
+  const cost = hydrated.values.find((row) => row[1] === "cost");
+  assert.equal(cost[4], "c_egg");
+  assert.equal(cost[7], "Morning Market");
+  assert.equal(cost[13], "synced");
+  assert.equal(cost[14], "cost_1");
+
+  fixture.googleClient.inputValues = [[
+    "CREATE",
+    "sale",
+    "2026-07-16",
+    "p_nlb_001",
+    "",
+    "1",
+    "5.00",
+  ]];
+  fixture.googleClient.writes.length = 0;
+  await fixture.integration.exportMetrics({
+    merchantId,
+    dates: ["2026-07-16"],
+    productId: "p_nlb_001",
+  });
+  assert.equal(
+    fixture.googleClient.writes
+      .flatMap(({ data }) => data)
+      .some(({ range }) => range.startsWith("Inputs!A2:")),
+    false,
   );
 });
 
@@ -688,7 +855,7 @@ test("phase 2 imports valid input rows and writes row-level errors back", async 
   assert.equal(fixture.integrationStore.listRowStates({
     merchantId,
     sheetName: "Inputs",
-  }).length, 2);
+  }).length, 3);
   assert.equal(
     fixture.integrationStore.getSyncJob(imported.job_id).status,
     "completed",

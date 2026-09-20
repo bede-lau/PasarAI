@@ -78,6 +78,12 @@ PasarAI creates or repairs these tabs:
 - `Sync Errors`: row number, record type, error, and update time.
 - `Configuration`: accepted actions, fields, payment methods, and statuses.
 
+The five managed tabs use a versioned workbook design with distinct tab
+colors, frozen title rows, readable column widths, typed metric formats,
+filters, and validation lists. The design version is stored in
+`Configuration!B9`, so styling is applied once per workbook version and does
+not create a formatting write on every reconciliation.
+
 The `Inputs` columns are:
 
 ```text
@@ -88,6 +94,11 @@ Record Version | Error | Row Checksum
 ```
 
 Columns `Status` through `Row Checksum` are managed by PasarAI.
+
+When `Inputs` is empty, PasarAI projects existing single-line sale and cost
+events from Lakebase into synchronized rows. Each projected row is written with
+its database record ID, version, checksum, and durable row state. Existing user
+rows are preserved and are never replaced by hydration.
 
 PasarAI writes user and technical values with the Sheets `RAW` mode. Only the
 five application-owned formulas in `Dashboard!B3:B7` use `USER_ENTERED`.
@@ -169,8 +180,10 @@ exports from creating a notification loop.
 
 ## Operations
 
-- `Reconcile` imports changed input rows and refreshes managed metrics.
-- `Export` refreshes `Dashboard` and `Metrics` only.
+- `Reconcile` imports changed input rows and refreshes managed metrics for the
+  frontend's selected product and reporting date.
+- `Export` refreshes `Dashboard` and `Metrics` for the frontend's selected
+  product and reporting date, and hydrates `Inputs` only when it is empty.
 - `Disconnect` stops the active notification channel when possible and removes
   durable OAuth tokens while retaining the audit record.
 - Direct API clients must send a unique `Idempotency-Key` for every Google

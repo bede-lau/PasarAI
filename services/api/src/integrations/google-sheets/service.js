@@ -23,6 +23,8 @@ const DEFAULT_WATCH_RENEWAL_WINDOW_MS = 60 * 60 * 1000;
 const OPERATION_LEASE_MS = 45 * 60 * 1000;
 const SYNC_LEASE_MS = 30 * 60 * 1000;
 const INPUT_COLUMN_COUNT = 18;
+const WORKBOOK_SCHEMA_VERSION = "2";
+const WORKBOOK_SCHEMA_CELL = "Configuration!B9";
 const INPUT_HEADERS = [
   "Action",
   "Record Type",
@@ -160,10 +162,10 @@ function sheetTitles(metadata) {
   );
 }
 
-function dashboardValues() {
+function dashboardValues(productId) {
   return [
-    ["PasarAI Metrics Dashboard"],
-    [],
+    ["PasarAI Metrics Dashboard", ""],
+    ["Product scope", productId ?? "All products"],
     ["Latest reporting date", ""],
     ["Revenue (RM)", ""],
     ["Cost of sales (RM)", ""],
@@ -188,7 +190,14 @@ function dashboardFormulaData() {
   }];
 }
 
-function metricRows(summaries, completedAt) {
+function sheetDateSerial(value) {
+  return Math.round(
+    (Date.parse(`${value}T00:00:00Z`) - Date.UTC(1899, 11, 30))
+      / (24 * 60 * 60 * 1000),
+  );
+}
+
+function metricRows(summaries, completedAt, productId) {
   return [
     [
       "Date",
@@ -205,16 +214,16 @@ function metricRows(summaries, completedAt) {
       "Checksum",
     ],
     ...summaries.map((summary) => [
-      summary.date,
-      summary.revenue_rm,
-      summary.cogs_rm,
-      summary.gross_profit_rm,
-      summary.gross_margin_pct,
+      sheetDateSerial(summary.date),
+      Number(summary.revenue_rm),
+      Number(summary.cogs_rm),
+      Number(summary.gross_profit_rm),
+      Number(summary.gross_margin_pct),
       summary.data_completeness.state,
-      summary.baseline_comparison.baseline_margin_pct,
-      summary.baseline_comparison.margin_change_percentage_points,
+      Number(summary.baseline_comparison.baseline_margin_pct),
+      Number(summary.baseline_comparison.margin_change_percentage_points),
       completedAt,
-      `daily:${summary.date}`,
+      `daily:${productId ?? "all"}:${summary.date}`,
       1,
       checksum(summary),
     ]),
@@ -235,18 +244,19 @@ function configurationValues() {
     ["Payment methods", "cash, card, bank_transfer, other"],
     ["Managed status values", "synced, error, conflict"],
     ["Currency", "MYR"],
+    ["Workbook design version", WORKBOOK_SCHEMA_VERSION],
   ];
 }
 
-function initialWorkbookData(completedAt) {
+function initialWorkbookData(completedAt, productId) {
   return [{
     range: "Dashboard!A1:B9",
     majorDimension: "ROWS",
-    values: dashboardValues(),
+    values: dashboardValues(productId),
   }, {
     range: "Metrics!A1:L1",
     majorDimension: "ROWS",
-    values: metricRows([], completedAt),
+    values: metricRows([], completedAt, productId),
   }, {
     range: "Inputs!A1:R1",
     majorDimension: "ROWS",
@@ -256,16 +266,426 @@ function initialWorkbookData(completedAt) {
     majorDimension: "ROWS",
     values: [SYNC_ERROR_HEADERS],
   }, {
-    range: "Configuration!A1:B8",
+    range: "Configuration!A1:B9",
     majorDimension: "ROWS",
     values: configurationValues(),
   }];
 }
 
-function initialDataForSheets(titles, completedAt) {
+function initialDataForSheets(titles, completedAt, productId) {
   const requested = new Set(titles);
-  return initialWorkbookData(completedAt).filter(({ range }) =>
+  return initialWorkbookData(completedAt, productId).filter(({ range }) =>
     requested.has(range.split("!")[0]));
+}
+
+function sheetIds(metadata) {
+  return new Map(
+    (metadata.sheets ?? [])
+      .map((sheet) => [
+        sheet.properties?.title,
+        sheet.properties?.sheetId,
+      ])
+      .filter(([title, sheetId]) =>
+        Boolean(title) && Number.isInteger(sheetId)),
+  );
+}
+
+function gridRange(
+  sheetId,
+  startRowIndex,
+  endRowIndex,
+  startColumnIndex,
+  endColumnIndex,
+) {
+  return {
+    sheetId,
+    startRowIndex,
+    endRowIndex,
+    startColumnIndex,
+    endColumnIndex,
+  };
+}
+
+function repeatFormat(range, userEnteredFormat, fields = "userEnteredFormat") {
+  return {
+    repeatCell: {
+      range,
+      cell: { userEnteredFormat },
+      fields,
+    },
+  };
+}
+
+function columnWidth(sheetId, startIndex, endIndex, pixelSize) {
+  return {
+    updateDimensionProperties: {
+      range: {
+        sheetId,
+        dimension: "COLUMNS",
+        startIndex,
+        endIndex,
+      },
+      properties: { pixelSize },
+      fields: "pixelSize",
+    },
+  };
+}
+
+function rowHeight(sheetId, startIndex, endIndex, pixelSize) {
+  return {
+    updateDimensionProperties: {
+      range: {
+        sheetId,
+        dimension: "ROWS",
+        startIndex,
+        endIndex,
+      },
+      properties: { pixelSize },
+      fields: "pixelSize",
+    },
+  };
+}
+
+function listValidation(range, values) {
+  return {
+    setDataValidation: {
+      range,
+      rule: {
+        condition: {
+          type: "ONE_OF_LIST",
+          values: values.map((userEnteredValue) => ({ userEnteredValue })),
+        },
+        strict: true,
+        showCustomUi: true,
+      },
+    },
+  };
+}
+
+function workbookFormattingRequests(metadata) {
+  const ids = sheetIds(metadata);
+  const requests = [];
+  const colors = {
+    ink: { red: 0.16, green: 0.12, blue: 0.09 },
+    white: { red: 1, green: 1, blue: 1 },
+    gold: { red: 0.95, green: 0.69, blue: 0.16 },
+    paleGold: { red: 1, green: 0.95, blue: 0.78 },
+    green: { red: 0.20, green: 0.45, blue: 0.27 },
+    blue: { red: 0.20, green: 0.40, blue: 0.62 },
+    paleBlue: { red: 0.89, green: 0.94, blue: 0.98 },
+    red: { red: 0.66, green: 0.18, blue: 0.14 },
+    paleRed: { red: 0.99, green: 0.90, blue: 0.88 },
+    gray: { red: 0.46, green: 0.44, blue: 0.40 },
+    paleGray: { red: 0.94, green: 0.93, blue: 0.90 },
+  };
+
+  function configureSheet(title, tabColor, frozenRowCount = 1) {
+    const sheetId = ids.get(title);
+    if (sheetId === undefined) return null;
+    requests.push({
+      updateSheetProperties: {
+        properties: {
+          sheetId,
+          tabColorStyle: { rgbColor: tabColor },
+          gridProperties: {
+            frozenRowCount,
+            hideGridlines: true,
+          },
+        },
+        fields:
+          "tabColorStyle,gridProperties.frozenRowCount,gridProperties.hideGridlines",
+      },
+    });
+    return sheetId;
+  }
+
+  const dashboard = configureSheet("Dashboard", colors.gold);
+  if (dashboard !== null) {
+    requests.push(
+      repeatFormat(
+        gridRange(dashboard, 0, 1, 0, 2),
+        {
+          backgroundColorStyle: { rgbColor: colors.ink },
+          textFormat: {
+            foregroundColorStyle: { rgbColor: colors.white },
+            bold: true,
+            fontSize: 16,
+          },
+          verticalAlignment: "MIDDLE",
+          wrapStrategy: "WRAP",
+        },
+      ),
+      repeatFormat(
+        gridRange(dashboard, 1, 7, 0, 1),
+        {
+          backgroundColorStyle: { rgbColor: colors.paleGold },
+          textFormat: { bold: true },
+          verticalAlignment: "MIDDLE",
+        },
+      ),
+      repeatFormat(
+        gridRange(dashboard, 1, 7, 1, 2),
+        {
+          backgroundColorStyle: { rgbColor: colors.white },
+          textFormat: { bold: true, fontSize: 12 },
+          horizontalAlignment: "RIGHT",
+          verticalAlignment: "MIDDLE",
+        },
+      ),
+      repeatFormat(
+        gridRange(dashboard, 2, 3, 1, 2),
+        {
+          numberFormat: { type: "DATE", pattern: "dd/mm/yyyy" },
+          horizontalAlignment: "RIGHT",
+        },
+        "userEnteredFormat.numberFormat,userEnteredFormat.horizontalAlignment",
+      ),
+      repeatFormat(
+        gridRange(dashboard, 3, 6, 1, 2),
+        {
+          numberFormat: { type: "NUMBER", pattern: "\"RM\" #,##0.00" },
+          horizontalAlignment: "RIGHT",
+        },
+        "userEnteredFormat.numberFormat,userEnteredFormat.horizontalAlignment",
+      ),
+      repeatFormat(
+        gridRange(dashboard, 6, 7, 1, 2),
+        {
+          numberFormat: { type: "NUMBER", pattern: "0.00\"%\"" },
+          horizontalAlignment: "RIGHT",
+        },
+        "userEnteredFormat.numberFormat,userEnteredFormat.horizontalAlignment",
+      ),
+      repeatFormat(
+        gridRange(dashboard, 8, 9, 0, 2),
+        {
+          backgroundColorStyle: { rgbColor: colors.paleGray },
+          textFormat: {
+            foregroundColorStyle: { rgbColor: colors.gray },
+            italic: true,
+          },
+          wrapStrategy: "WRAP",
+        },
+      ),
+      columnWidth(dashboard, 0, 1, 230),
+      columnWidth(dashboard, 1, 2, 170),
+      rowHeight(dashboard, 0, 1, 38),
+    );
+  }
+
+  const metrics = configureSheet("Metrics", colors.green);
+  if (metrics !== null) {
+    requests.push(
+      repeatFormat(
+        gridRange(metrics, 0, 1, 0, 12),
+        {
+          backgroundColorStyle: { rgbColor: colors.green },
+          textFormat: {
+            foregroundColorStyle: { rgbColor: colors.white },
+            bold: true,
+          },
+          horizontalAlignment: "CENTER",
+          verticalAlignment: "MIDDLE",
+          wrapStrategy: "WRAP",
+        },
+      ),
+      repeatFormat(
+        gridRange(metrics, 1, undefined, 0, 12),
+        {
+          verticalAlignment: "MIDDLE",
+        },
+        "userEnteredFormat.verticalAlignment",
+      ),
+      repeatFormat(
+        gridRange(metrics, 1, undefined, 0, 1),
+        { numberFormat: { type: "DATE", pattern: "dd/mm/yyyy" } },
+        "userEnteredFormat.numberFormat",
+      ),
+      repeatFormat(
+        gridRange(metrics, 1, undefined, 1, 4),
+        { numberFormat: { type: "NUMBER", pattern: "\"RM\" #,##0.00" } },
+        "userEnteredFormat.numberFormat",
+      ),
+      repeatFormat(
+        gridRange(metrics, 1, undefined, 4, 5),
+        { numberFormat: { type: "NUMBER", pattern: "0.00\"%\"" } },
+        "userEnteredFormat.numberFormat",
+      ),
+      repeatFormat(
+        gridRange(metrics, 1, undefined, 6, 7),
+        { numberFormat: { type: "NUMBER", pattern: "0.00\"%\"" } },
+        "userEnteredFormat.numberFormat",
+      ),
+      repeatFormat(
+        gridRange(metrics, 1, undefined, 7, 8),
+        { numberFormat: { type: "NUMBER", pattern: "0.00" } },
+        "userEnteredFormat.numberFormat",
+      ),
+      {
+        setBasicFilter: {
+          filter: { range: gridRange(metrics, 0, undefined, 0, 12) },
+        },
+      },
+      columnWidth(metrics, 0, 1, 105),
+      columnWidth(metrics, 1, 5, 130),
+      columnWidth(metrics, 5, 9, 150),
+      columnWidth(metrics, 9, 12, 210),
+      rowHeight(metrics, 0, 1, 42),
+    );
+  }
+
+  const inputs = configureSheet("Inputs", colors.blue);
+  if (inputs !== null) {
+    requests.push(
+      repeatFormat(
+        gridRange(inputs, 0, 1, 0, 18),
+        {
+          backgroundColorStyle: { rgbColor: colors.blue },
+          textFormat: {
+            foregroundColorStyle: { rgbColor: colors.white },
+            bold: true,
+          },
+          horizontalAlignment: "CENTER",
+          verticalAlignment: "MIDDLE",
+          wrapStrategy: "WRAP",
+        },
+      ),
+      repeatFormat(
+        gridRange(inputs, 1, undefined, 0, 13),
+        {
+          backgroundColorStyle: { rgbColor: colors.white },
+          verticalAlignment: "MIDDLE",
+        },
+        "userEnteredFormat.backgroundColorStyle,userEnteredFormat.verticalAlignment",
+      ),
+      repeatFormat(
+        gridRange(inputs, 1, undefined, 13, 18),
+        {
+          backgroundColorStyle: { rgbColor: colors.paleGray },
+          textFormat: {
+            foregroundColorStyle: { rgbColor: colors.gray },
+          },
+          verticalAlignment: "MIDDLE",
+        },
+        "userEnteredFormat.backgroundColorStyle,userEnteredFormat.textFormat,userEnteredFormat.verticalAlignment",
+      ),
+      repeatFormat(
+        gridRange(inputs, 1, undefined, 2, 3),
+        { numberFormat: { type: "DATE_TIME", pattern: "dd/mm/yyyy hh:mm" } },
+        "userEnteredFormat.numberFormat",
+      ),
+      repeatFormat(
+        gridRange(inputs, 1, undefined, 6, 7),
+        { numberFormat: { type: "NUMBER", pattern: "\"RM\" #,##0.00" } },
+        "userEnteredFormat.numberFormat",
+      ),
+      repeatFormat(
+        gridRange(inputs, 1, undefined, 10, 11),
+        { numberFormat: { type: "NUMBER", pattern: "\"RM\" #,##0.00" } },
+        "userEnteredFormat.numberFormat",
+      ),
+      listValidation(
+        gridRange(inputs, 1, undefined, 0, 1),
+        ["CREATE", "UPDATE", "REFRESH"],
+      ),
+      listValidation(
+        gridRange(inputs, 1, undefined, 1, 2),
+        ["sale", "cost"],
+      ),
+      listValidation(
+        gridRange(inputs, 1, undefined, 11, 12),
+        ["cash", "card", "bank_transfer", "other"],
+      ),
+      {
+        setBasicFilter: {
+          filter: { range: gridRange(inputs, 0, undefined, 0, 18) },
+        },
+      },
+      columnWidth(inputs, 0, 2, 105),
+      columnWidth(inputs, 2, 3, 165),
+      columnWidth(inputs, 3, 5, 145),
+      columnWidth(inputs, 5, 7, 115),
+      columnWidth(inputs, 7, 8, 175),
+      columnWidth(inputs, 8, 12, 120),
+      columnWidth(inputs, 12, 13, 220),
+      columnWidth(inputs, 13, 16, 150),
+      columnWidth(inputs, 16, 17, 260),
+      columnWidth(inputs, 17, 18, 220),
+      rowHeight(inputs, 0, 1, 48),
+    );
+  }
+
+  const syncErrors = configureSheet("Sync Errors", colors.red);
+  if (syncErrors !== null) {
+    requests.push(
+      repeatFormat(
+        gridRange(syncErrors, 0, 1, 0, 4),
+        {
+          backgroundColorStyle: { rgbColor: colors.red },
+          textFormat: {
+            foregroundColorStyle: { rgbColor: colors.white },
+            bold: true,
+          },
+          verticalAlignment: "MIDDLE",
+        },
+      ),
+      repeatFormat(
+        gridRange(syncErrors, 1, undefined, 0, 4),
+        {
+          backgroundColorStyle: { rgbColor: colors.paleRed },
+          verticalAlignment: "TOP",
+          wrapStrategy: "WRAP",
+        },
+        "userEnteredFormat.backgroundColorStyle,userEnteredFormat.verticalAlignment,userEnteredFormat.wrapStrategy",
+      ),
+      columnWidth(syncErrors, 0, 1, 90),
+      columnWidth(syncErrors, 1, 2, 130),
+      columnWidth(syncErrors, 2, 3, 430),
+      columnWidth(syncErrors, 3, 4, 180),
+      rowHeight(syncErrors, 0, 1, 36),
+    );
+  }
+
+  const configuration = configureSheet("Configuration", colors.gray);
+  if (configuration !== null) {
+    requests.push(
+      repeatFormat(
+        gridRange(configuration, 0, 1, 0, 2),
+        {
+          backgroundColorStyle: { rgbColor: colors.ink },
+          textFormat: {
+            foregroundColorStyle: { rgbColor: colors.white },
+            bold: true,
+            fontSize: 14,
+          },
+          verticalAlignment: "MIDDLE",
+          wrapStrategy: "WRAP",
+        },
+      ),
+      repeatFormat(
+        gridRange(configuration, 1, 9, 0, 1),
+        {
+          backgroundColorStyle: { rgbColor: colors.paleBlue },
+          textFormat: { bold: true },
+          verticalAlignment: "MIDDLE",
+          wrapStrategy: "WRAP",
+        },
+      ),
+      repeatFormat(
+        gridRange(configuration, 1, 9, 1, 2),
+        {
+          backgroundColorStyle: { rgbColor: colors.white },
+          verticalAlignment: "MIDDLE",
+          wrapStrategy: "WRAP",
+        },
+      ),
+      columnWidth(configuration, 0, 1, 190),
+      columnWidth(configuration, 1, 2, 430),
+      rowHeight(configuration, 0, 1, 38),
+    );
+  }
+
+  return requests;
 }
 
 function inputCell(row, index) {
@@ -564,6 +984,35 @@ function refreshCostRow(row, payload, recordVersion) {
   return refreshedChecksum;
 }
 
+async function databaseInputRows(ledgerStore, merchantId) {
+  const events = (await ledgerStore.listEvents({ merchantId }))
+    .filter((event) => ["sale", "cost"].includes(event.type))
+    .sort((left, right) =>
+      left.occurredAt.localeCompare(right.occurredAt)
+      || left.eventId.localeCompare(right.eventId));
+  const rows = [];
+  for (const event of events) {
+    const current = await effectiveRecord(
+      ledgerStore,
+      merchantId,
+      event.eventId,
+    );
+    if (!current || current.payload?.lines?.length !== 1) continue;
+    const row = Array.from({ length: INPUT_COLUMN_COUNT }, () => "");
+    row[14] = event.eventId;
+    const sourceChecksum = event.type === "sale"
+      ? refreshSaleRow(row, current.payload, current.version)
+      : refreshCostRow(row, current.payload, current.version);
+    rows.push({
+      row,
+      recordId: event.eventId,
+      recordVersion: current.version,
+      checksum: sourceChecksum,
+    });
+  }
+  return rows;
+}
+
 function saleCorrectionChanges(row, payload) {
   if (payload.lines.length !== 1) {
     throw new TypeError(
@@ -646,6 +1095,8 @@ export function createGoogleSheetsIntegration({
   googleClient,
   tokenCipher,
   webhookUrl,
+  defaultProductId,
+  defaultReportingDate,
   watchTtlMs = DEFAULT_WATCH_TTL_MS,
   watchRenewalWindowMs = DEFAULT_WATCH_RENEWAL_WINDOW_MS,
   syncLeaseMs = SYNC_LEASE_MS,
@@ -667,6 +1118,12 @@ export function createGoogleSheetsIntegration({
     throw new Error("syncLeaseHeartbeatMs must be a positive number");
   }
   const normalizedWebhookUrl = validateWebhookUrl(webhookUrl);
+  const normalizedDefaultProductId = String(defaultProductId ?? "").trim()
+    || null;
+  const normalizedDefaultReportingDate =
+    /^\d{4}-\d{2}-\d{2}$/u.test(String(defaultReportingDate ?? ""))
+      ? String(defaultReportingDate)
+      : null;
   const syncOwnerId = `google_sheets_sync_owner_${randomUUID()}`;
   const heldSyncLeases = new Map();
 
@@ -937,9 +1394,10 @@ export function createGoogleSheetsIntegration({
     connection,
     accessToken,
     syncLeaseToken,
+    formatIfNeeded = false,
   }) {
     const merchantId = connection.merchantId;
-    const metadata = await googleClient.getSpreadsheet({
+    let metadata = await googleClient.getSpreadsheet({
       accessToken,
       spreadsheetId: connection.spreadsheetId,
     });
@@ -961,6 +1419,7 @@ export function createGoogleSheetsIntegration({
         data: initialDataForSheets(
           missing,
           new Date(now()).toISOString(),
+          normalizedDefaultProductId,
         ),
       });
       if (missing.includes("Dashboard")) {
@@ -972,19 +1431,120 @@ export function createGoogleSheetsIntegration({
           valueInputOption: "USER_ENTERED",
         });
       }
+      metadata = await googleClient.getSpreadsheet({
+        accessToken,
+        spreadsheetId: connection.spreadsheetId,
+      });
+    }
+
+    let shouldFormat = missing.length > 0;
+    if (!shouldFormat && formatIfNeeded) {
+      const version = await googleClient.getValues({
+        accessToken,
+        spreadsheetId: connection.spreadsheetId,
+        range: WORKBOOK_SCHEMA_CELL,
+      });
+      shouldFormat =
+        String(version?.values?.[0]?.[0] ?? "") !== WORKBOOK_SCHEMA_VERSION;
+    }
+    if (shouldFormat) {
+      const requests = workbookFormattingRequests(metadata);
+      if (requests.length) {
+        await assertSyncLease(merchantId, syncLeaseToken);
+        await googleClient.batchUpdateSpreadsheet({
+          accessToken,
+          spreadsheetId: connection.spreadsheetId,
+          requests,
+        });
+      }
+      await assertSyncLease(merchantId, syncLeaseToken);
+      await googleClient.batchUpdateValues({
+        accessToken,
+        spreadsheetId: connection.spreadsheetId,
+        data: [{
+          range: WORKBOOK_SCHEMA_CELL,
+          majorDimension: "ROWS",
+          values: [[WORKBOOK_SCHEMA_VERSION]],
+        }],
+      });
     }
     return metadata;
   }
 
-  async function reportingDates(merchantId, requestedDates) {
+  async function hydrateInputsIfEmpty({
+    connection,
+    accessToken,
+    syncLeaseToken,
+  }) {
+    const existing = await googleClient.getValues({
+      accessToken,
+      spreadsheetId: connection.spreadsheetId,
+      range: "Inputs!A2:R10000",
+    });
+    const existingRows = (existing?.values ?? []).map(normalizedInputRow);
+    if (existingRows.some((row) => !inputIsBlank(row))) return 0;
+
+    const records = await databaseInputRows(
+      ledgerStore,
+      connection.merchantId,
+    );
+    if (!records.length) return 0;
+    const syncedAt = new Date(now()).toISOString();
+    for (const [index, record] of records.entries()) {
+      await assertSyncLease(connection.merchantId, syncLeaseToken);
+      await store.saveRowState({
+        merchantId: connection.merchantId,
+        sheetName: "Inputs",
+        recordId: record.recordId,
+        rowNumber: index + 2,
+        recordVersion: record.recordVersion,
+        checksum: record.checksum,
+        lastSyncedAt: syncedAt,
+      });
+    }
+    await assertSyncLease(connection.merchantId, syncLeaseToken);
+    await googleClient.batchUpdateValues({
+      accessToken,
+      spreadsheetId: connection.spreadsheetId,
+      data: [{
+        range: `Inputs!A2:R${records.length + 1}`,
+        majorDimension: "ROWS",
+        values: records.map(({ row }) => row),
+      }],
+    });
+    return records.length;
+  }
+
+  async function reportingDates(merchantId, requestedDates, productId) {
     if (requestedDates?.length) {
       return [...new Set(requestedDates)].sort();
     }
-    const events = await ledgerStore.listEvents({ merchantId });
-    const dates = await Promise.all(
-      events.map((event) =>
-        ledgerStore.getMerchantCalendarDate(merchantId, event.occurredAt)),
-    );
+    if (normalizedDefaultReportingDate) {
+      return [normalizedDefaultReportingDate];
+    }
+    const events = await ledgerStore.listEvents({
+      merchantId,
+      type: "sale",
+    });
+    const dates = [];
+    for (const event of events) {
+      const current = await effectiveRecord(
+        ledgerStore,
+        merchantId,
+        event.eventId,
+      );
+      if (
+        productId
+        && !current?.payload?.lines?.some((line) =>
+          line.product_id === productId)
+      ) {
+        continue;
+      }
+      dates.push(await ledgerStore.getMerchantCalendarDate(
+        merchantId,
+        event.occurredAt,
+      ));
+    }
     if (!dates.length) {
       dates.push(await ledgerStore.getMerchantCalendarDate(
         merchantId,
@@ -1248,11 +1808,17 @@ export function createGoogleSheetsIntegration({
           connection,
           accessToken: tokens.access_token,
         };
-        await ensureWorkbook(authorized);
+        await ensureWorkbook({
+          ...authorized,
+          formatIfNeeded: true,
+        });
         await googleClient.batchUpdateValues({
           accessToken: tokens.access_token,
           spreadsheetId: connection.spreadsheetId,
-          data: initialWorkbookData(new Date(now()).toISOString()),
+          data: initialWorkbookData(
+            new Date(now()).toISOString(),
+            normalizedDefaultProductId,
+          ),
         });
         await googleClient.batchUpdateValues({
           accessToken: tokens.access_token,
@@ -1260,6 +1826,7 @@ export function createGoogleSheetsIntegration({
           data: dashboardFormulaData(),
           valueInputOption: "USER_ENTERED",
         });
+        await hydrateInputsIfEmpty(authorized);
         const readyConnection = connection.syncMode === "automatic"
           ? await replaceWatch(merchantId)
           : connection;
@@ -1274,7 +1841,11 @@ export function createGoogleSheetsIntegration({
       args = {},
       { idempotencyKey, syncLeaseToken } = {},
     ) {
-      const { merchantId, dates } = args;
+      const {
+        merchantId,
+        dates,
+        productId = normalizedDefaultProductId,
+      } = args;
       if (idempotencyKey !== undefined) {
         return idempotentOperation({
           merchantId,
@@ -1294,6 +1865,7 @@ export function createGoogleSheetsIntegration({
       }
       requestContract("google-sheets-export.request", {
         ...(dates ? { dates } : {}),
+        ...(productId ? { product_id: productId } : {}),
       });
       const jobId = idFactory("google_sheets_export");
       const startedAt = new Date(now()).toISOString();
@@ -1311,14 +1883,20 @@ export function createGoogleSheetsIntegration({
         await ensureWorkbook({
           ...authorized,
           syncLeaseToken,
+          formatIfNeeded: true,
         });
-        const resolvedDates = await reportingDates(merchantId, dates);
+        const resolvedDates = await reportingDates(
+          merchantId,
+          dates,
+          productId,
+        );
         const summaries = [];
         for (const date of resolvedDates) {
           await assertSyncLease(merchantId, syncLeaseToken);
           summaries.push(await businessService.getDailySummary({
             merchantId,
             date,
+            productId,
           }));
         }
         const completedAt = new Date(now()).toISOString();
@@ -1335,11 +1913,11 @@ export function createGoogleSheetsIntegration({
           data: [{
             range: "Dashboard!A1:B9",
             majorDimension: "ROWS",
-            values: dashboardValues(),
+            values: dashboardValues(productId),
           }, {
             range: `Metrics!A1:L${summaries.length + 1}`,
             majorDimension: "ROWS",
-            values: metricRows(summaries, completedAt),
+            values: metricRows(summaries, completedAt, productId),
           }],
         });
         await assertSyncLease(merchantId, syncLeaseToken);
@@ -1348,6 +1926,10 @@ export function createGoogleSheetsIntegration({
           spreadsheetId: authorized.connection.spreadsheetId,
           data: dashboardFormulaData(),
           valueInputOption: "USER_ENTERED",
+        });
+        await hydrateInputsIfEmpty({
+          ...authorized,
+          syncLeaseToken,
         });
         await patchConnectedConnection(merchantId, {
           status: "active",
@@ -1487,7 +2069,7 @@ export function createGoogleSheetsIntegration({
               merchantId,
               recordId,
             );
-            if (!saved || !current) {
+            if (!current) {
               const message =
                 "This synchronized row is not recognized by PasarAI.";
               setInputError(row, message, sourceChecksum);
@@ -1497,6 +2079,40 @@ export function createGoogleSheetsIntegration({
                 message,
                 new Date(now()).toISOString(),
               ]);
+              sheetChanged = true;
+              continue;
+            }
+            if (!saved) {
+              if (
+                !["sale", "cost"].includes(current.event.type)
+                || current.payload?.lines?.length !== 1
+              ) {
+                const message =
+                  "This synchronized row cannot be repaired from the database.";
+                setInputError(row, message, sourceChecksum);
+                syncErrors.push([
+                  rowNumber,
+                  recordType || "unknown",
+                  message,
+                  new Date(now()).toISOString(),
+                ]);
+                sheetChanged = true;
+                continue;
+              }
+              const repairedChecksum = current.event.type === "sale"
+                ? refreshSaleRow(row, current.payload, current.version)
+                : refreshCostRow(row, current.payload, current.version);
+              await assertSyncLease(merchantId, syncLeaseToken);
+              await store.saveRowState({
+                merchantId,
+                sheetName: "Inputs",
+                recordId,
+                rowNumber,
+                recordVersion: current.version,
+                checksum: repairedChecksum,
+                lastSyncedAt: new Date(now()).toISOString(),
+              });
+              rowsProcessed += 1;
               sheetChanged = true;
               continue;
             }
@@ -1785,6 +2401,8 @@ export function createGoogleSheetsIntegration({
     ) {
       const {
         merchantId,
+        dates,
+        productId = normalizedDefaultProductId,
         exportWhenUnchanged = true,
       } = args;
       if (idempotencyKey !== undefined) {
@@ -1804,7 +2422,10 @@ export function createGoogleSheetsIntegration({
             api.reconcile(args, { syncLeaseToken: claimToken }),
         });
       }
-      requestContract("google-sheets-reconcile.request", {});
+      requestContract("google-sheets-reconcile.request", {
+        ...(dates ? { dates } : {}),
+        ...(productId ? { product_id: productId } : {}),
+      });
       const jobId = idFactory("google_sheets_reconcile");
       const startedAt = new Date(now()).toISOString();
       await store.startSyncJob({
@@ -1821,7 +2442,7 @@ export function createGoogleSheetsIntegration({
         );
         const exported = exportWhenUnchanged || imported.rows_processed > 0
           ? await api.exportMetrics(
-              { merchantId },
+              { merchantId, dates, productId },
               { syncLeaseToken },
             )
           : null;

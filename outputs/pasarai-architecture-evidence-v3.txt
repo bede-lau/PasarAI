@@ -1,0 +1,32 @@
+PasarAI Architecture Slide v3 - Evidence and Assumptions
+
+COMPONENT-TO-REPOSITORY EVIDENCE
+
+Component | Role on slide | Repository evidence | Status
+Food Stall Owner / channels | Sends Telegram text, voice, receipt, or authenticated web upload | services/api/src/index.js:1565-1698,1701-1769,1815-1967; apps/web/src/lib/merchant-auth.ts:18-38,64-81,132-200 | Implemented
+Telegram Bot | Receives updates through secret-protected webhook; update claim/deduplication and leases | services/api/src/index.js:1565-1698,1701-1769,1815-1967; services/api/src/backend/http-app.js:101-183 | Implemented
+Next.js Dashboard + BFF | Signed-session web runtime; keeps merchant bearer server-side; serves dashboard data | README.md:28-31; apps/web/src/lib/merchant-auth.ts:18-38,64-81,132-200; apps/web/src/lib/dashboard-data.ts:38-97 | Implemented
+Node API Runtime | HTTP/API runtime and backend request handling | services/api/src/runtime.js:114-157,280-302; services/api/src/backend/http-app.js:101-183 | Implemented
+Evidence-First Intake | Claims/deduplicates input and stores raw evidence before interpretation | services/api/src/index.js:1565-1698,1701-1769,1815-1967; services/api/src/storage/file-evidence-store.js:13-50,70-121 | Implemented
+ElevenLabs Scribe | Voice-only transcription adapter returning transcript data | services/api/src/providers/elevenlabs-scribe.js:3-55 | Adapter implemented; live unverified
+Qwen / DashScope | Multilingual message interpretation and receipt extraction returning candidate structured data | services/api/src/providers/qwen-message-interpreter.js:81-124,145-208; services/api/src/providers/qwen-receipt-extractor.js:283-368 | Adapter implemented; live unverified
+Merchant Review Gate | Holds ambiguous or low-confidence candidates until explicit confirmation/version/token checks | services/api/src/index.js:1296-1362,1491-1531; services/api/src/backend/service.js:1971-2007,2046-2159,2555-2737 | Implemented
+Ledger & Margin Service | Contract validation, deterministic decimal-safe finance, scenarios, and idempotent append | packages/finance/src/index.js:1-6,36-102,215-236; services/api/src/backend/service.js:503-686,1158-1314 | Implemented
+Lakebase Ledger | Operational system of record for append-only events, JSONB, corrections, and related state | databricks/lakebase/migrations/001_initial.sql:31-102,181-212; services/api/src/backend/service.js:446-466 | Implemented schema/runtime integration
+Evidence Files | Immutable raw JSON/media evidence store linked from financial events | services/api/src/storage/file-evidence-store.js:13-50,70-121; docs/manual-actions.md:30-31 | Implemented; durable production mount required
+Google Sync Worker / Sheets | Controlled metrics/rows sync plus durable notification queue, retries, and backoff | services/api/src/integrations/google-sheets/service.js:2000-2072; services/api/src/integrations/google-sheets/background-worker.js:55-159; databricks/lakebase/migrations/006_google_sheets_notification_queue.sql:3-53 | Deployable; setup required
+Databricks / Lakeflow | Manually triggered JDBC snapshot, Bronze-Silver-Gold processing, forecast publication back to Lakebase | databricks/README.md:22-49; databricks/pasarai_pipeline.py:61-75,419-527; databricks/03_publish_forecasts.py:286-308 | Deployable; manual setup/trigger required
+Security | Signed HttpOnly session, same-origin checks, merchant bearer, webhook secrets, AES-256-GCM OAuth token encryption | apps/web/src/lib/merchant-auth.ts:64-81,132-200; services/api/src/backend/http-app.js:40-87,106-109,628-638; services/api/src/integrations/google-sheets/token-cipher.js:7-57 | Implemented
+Health / surfaced degradation | Dependency-aware /healthz states and surfaced error/degraded behavior | services/api/src/backend/http-app.js:40-87,106-109,628-638; apps/web/src/lib/dashboard-data.ts:38-97 | Implemented; no centralized observability claim
+GitHub Actions CI | Secret-free foundation CI workflow | .github/workflows/ci.yml:1-33 | Implemented
+Codex-assisted build | Development-only assistance; no runtime data path | Slide requirement and deck build workflow only | Non-runtime
+
+ASSUMPTIONS AND UNRESOLVED QUESTIONS
+
+1. ElevenLabs and Qwen adapters exist, but production credentials, quotas, latency, and live provider responses were not verified for this slide.
+2. The evidence-file implementation requires the documented durable production mount; the slide does not claim object storage.
+3. Google Sheets and Databricks integrations are presented as deployable but setup-required, not as fully provisioned production services.
+4. Databricks is manually triggered and does not serve the dashboard directly; forecasts return to Lakebase before application access.
+5. Google Sheets is a controlled external view/sync target, not the system of record.
+6. ElevenLabs Advisor is omitted because a current production web widget is not verified.
+7. The slide intentionally avoids claims for autoscaling, multi-region, containers/orchestration, centralized logs/metrics/tracing/APM, or automated production deployment.

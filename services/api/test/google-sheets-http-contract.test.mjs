@@ -43,8 +43,15 @@ const mutations = [
     id: "google-sheets.export",
     path: "/export",
     method: "exportMetrics",
-    payload: { dates: ["2026-07-16"] },
-    input: { merchantId, dates: ["2026-07-16"] },
+    payload: {
+      dates: ["2026-07-16"],
+      product_id: "p_nlb_001",
+    },
+    input: {
+      merchantId,
+      dates: ["2026-07-16"],
+      productId: "p_nlb_001",
+    },
   },
   {
     id: "google-sheets.import",
@@ -57,8 +64,15 @@ const mutations = [
     id: "google-sheets.reconcile",
     path: "/reconcile",
     method: "reconcile",
-    payload: {},
-    input: { merchantId },
+    payload: {
+      dates: ["2026-07-16"],
+      product_id: "p_nlb_001",
+    },
+    input: {
+      merchantId,
+      dates: ["2026-07-16"],
+      productId: "p_nlb_001",
+    },
   },
   {
     id: "google-sheets.sync-mode",

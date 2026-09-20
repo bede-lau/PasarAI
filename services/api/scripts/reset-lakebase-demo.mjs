@@ -66,6 +66,49 @@ export function validateDemoSnapshot(snapshot = demoSnapshot) {
     baselineTotal += baseline;
     currentTotal += current;
   }
+  if (!Array.isArray(snapshot.costs) || !snapshot.costs.length) {
+    throw new Error("Demo snapshot must include database-backed cost inputs");
+  }
+  const costEventIds = new Set();
+  const costComponentIds = new Set();
+  for (const cost of snapshot.costs) {
+    if (costEventIds.has(cost.event_id)) {
+      throw new Error(`Duplicate demo cost event: ${cost.event_id}`);
+    }
+    costEventIds.add(cost.event_id);
+    if (!componentIds.has(cost.component_id)) {
+      throw new Error(`Unknown demo cost component: ${cost.component_id}`);
+    }
+    if (costComponentIds.has(cost.component_id)) {
+      throw new Error(`Duplicate demo cost component: ${cost.component_id}`);
+    }
+    costComponentIds.add(cost.component_id);
+    for (const [field, value] of [
+      ["quantity", cost.quantity],
+      ["pack_size", cost.pack_size],
+      ["total_price_rm", cost.total_price_rm],
+    ]) {
+      if (
+        !/^(?:0\.(?:0*[1-9][0-9]*)|[1-9][0-9]*(?:\.[0-9]+)?)$/u.test(
+          String(value),
+        )
+      ) {
+        throw new Error(
+          `Invalid demo cost ${field}: ${cost.component_id}`,
+        );
+      }
+    }
+    if (!["cash", "card", "bank_transfer", "other"].includes(
+      cost.payment_method,
+    )) {
+      throw new Error(
+        `Invalid demo payment method: ${cost.component_id}`,
+      );
+    }
+  }
+  if (costComponentIds.size !== componentIds.size) {
+    throw new Error("Demo costs must cover every recipe component");
+  }
 
   if (baselineTotal !== cents(snapshot.metrics.baseline_unit_cogs_rm)) {
     throw new Error("Demo baseline total does not match its components");
@@ -280,6 +323,10 @@ export async function applyDemoSnapshot(
     "DELETE FROM api_idempotency WHERE merchant_id = $1",
     [merchantId],
   );
+  await client.query(
+    "DELETE FROM google_sheet_row_state WHERE merchant_id = $1",
+    [merchantId],
+  );
   await client.query(`
     DELETE FROM raw_events
     WHERE event_id IN (SELECT event_id FROM demo_reset_event_ids)
@@ -392,6 +439,63 @@ export async function applyDemoSnapshot(
     ],
   );
 
+  for (const cost of snapshot.costs) {
+    const costPayload = {
+      merchant_id: merchantId,
+      occurred_at: cost.occurred_at,
+      source: "demo_reset",
+      source_language: "en",
+      supplier_name: cost.supplier_name,
+      metadata: {
+        payment_method: cost.payment_method,
+        note: cost.note,
+      },
+      lines: [{
+        component_id: cost.component_id,
+        quantity: cost.quantity,
+        uom: cost.uom,
+        pack_size: cost.pack_size,
+        total_price_rm: cost.total_price_rm,
+        confidence: "1.00",
+      }],
+      evidence: {
+        source_event_id: cost.event_id,
+      },
+    };
+    await client.query(
+      `
+        INSERT INTO raw_events (
+          event_id,
+          merchant_id,
+          endpoint_id,
+          idempotency_key,
+          external_id,
+          event_type,
+          occurred_at,
+          source,
+          source_language,
+          payload,
+          evidence,
+          response
+        )
+        VALUES (
+          $1, $2, 'costs.create', $3, $4, 'cost', $5, 'demo_reset', 'en',
+          $6::jsonb, $7::jsonb, $8::jsonb
+        )
+      `,
+      [
+        cost.event_id,
+        merchantId,
+        `demo-reset:${snapshot.dashboard_date}:cost:${cost.component_id}`,
+        JSON.stringify([merchantId, "source_event", cost.event_id]),
+        cost.occurred_at,
+        JSON.stringify(costPayload),
+        JSON.stringify(costPayload.evidence),
+        JSON.stringify({ state: "committed", event_id: cost.event_id }),
+      ],
+    );
+  }
+
   return {
     reset: true,
     dashboardDate: snapshot.dashboard_date,
@@ -399,6 +503,8 @@ export async function applyDemoSnapshot(
     baselineUnitCogsRm: snapshot.metrics.baseline_unit_cogs_rm,
     currentUnitCogsRm: snapshot.metrics.current_unit_cogs_rm,
     componentCount: snapshot.components.length,
+    costEventCount: snapshot.costs.length,
+    inputRecordCount: snapshot.costs.length + 1,
   };
 }
 

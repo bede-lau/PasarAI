@@ -62,7 +62,8 @@ The product owner records pass/fail and the time checked for each item:
 - Confirm the July 16 dashboard shows RM200.00 revenue, RM71.20 gross profit,
   35.60% gross margin, a RM2.50 July 15 baseline, RM3.22 current cost, and nine
   positive component changes.
-- Confirm VN-04 returns RM81.20 gross profit in Mandarin without a mutation.
+- Confirm VN-04 returns RM79.80 gross profit and 41.45% margin in Mandarin
+  without a mutation.
 - Complete the timed script in `docs/demo-120-second-rehearsal.md`.
 
 ## Untested dependencies

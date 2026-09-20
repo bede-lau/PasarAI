@@ -258,6 +258,7 @@ test("production dependency health covers every configured integration without s
     messageInterpreter: null,
     telegramConfigured: true,
     scribeConfigured: false,
+    transcriber: null,
     googleSheetsIntegration: null,
   });
   assert.deepEqual(Object.keys(dependencies), [
@@ -287,6 +288,28 @@ test("production dependency health covers every configured integration without s
     status: "unavailable",
   });
   assert.doesNotMatch(JSON.stringify(dependencies), /token|secret|key/i);
+});
+
+test("production health reflects the Scribe transcriber's live state", async () => {
+  const dependencies = createProductionDependencyMap({
+    store: null,
+    evidenceStore: null,
+    receiptExtractor: null,
+    messageInterpreter: null,
+    telegramConfigured: true,
+    scribeConfigured: true,
+    transcriber: {
+      async healthCheck() {
+        return { status: "unavailable", reason: "payment_issue" };
+      },
+    },
+    googleSheetsIntegration: null,
+  });
+
+  assert.deepEqual(await dependencies.scribe.healthCheck(), {
+    status: "unavailable",
+    reason: "payment_issue",
+  });
 });
 
 test("public cost-change contract persists and resolves VN-01/VN-02 exactly once", async () => {
@@ -630,13 +653,16 @@ test("Telegram text interpretation requires confirmation before commit", async (
     endpoint_id: "telegram.confirmation",
     confirmation_id: "telegram:502:database-confirmation",
     reply_language: "en",
-    date: "2026-07-12",
+    date: "2026-07-16",
     details: [
       "40 Nasi Lemak Biasa at RM5.00 each",
     ],
   });
   assert.equal(store.listEvents({ type: "sale" }).length, 0);
-  assert.match(replies[0].text, /I understood this for 2026-07-12/);
+  assert.match(
+    replies[0].text,
+    /Before I save anything, please check this for 16 Jul 2026/,
+  );
   assert.match(replies[0].text, /40 Nasi Lemak Biasa/);
   assert.doesNotMatch(replies[0].text, /database|p_nlb_001/i);
 
@@ -661,7 +687,7 @@ test("Telegram text interpretation requires confirmation before commit", async (
     endpoint_id: "sales.create",
     reply_language: "en",
     confirmation_id: "telegram:502:database-confirmation",
-    confirmed_date: "2026-07-12",
+    confirmed_date: "2026-07-16",
     confirmed_details: [
       "40 Nasi Lemak Biasa at RM5.00 each",
     ],
@@ -669,7 +695,7 @@ test("Telegram text interpretation requires confirmation before commit", async (
   assert.equal(store.listEvents({ type: "sale" }).length, 1);
   assert.equal(
     replies[1].text,
-    "Done, I've saved this for 2026-07-12:\n"
+    "Saved for 16 Jul 2026:\n"
       + "- 40 Nasi Lemak Biasa at RM5.00 each",
   );
 });
@@ -762,7 +788,10 @@ test("Telegram voice sales use the resolved date and wait for confirmation", asy
     /5 Nasi Lemak Biasa pada RM5.00 setiap satu/,
   );
   assert.equal(store.listEvents({ type: "sale" }).length, 0);
-  assert.match(replies[0].text, /Saya faham begini/);
+  assert.match(
+    replies[0].text,
+    /Sebelum saya simpan, sila semak butiran ini untuk 16 Jul 2026/,
+  );
 
   const confirmed = await ingestion.handleWebhook({
     headers: {
@@ -828,9 +857,9 @@ test("Telegram mixed interpretation previews all mutations before applying them"
     },
   });
 
-  assert.equal(response.body.state, "confirmation_required");
+  assert.equal(response.body.state, "clarification_required");
   assert.deepEqual(response.body.business_result, {
-    state: "confirmation_required",
+    state: "clarification_required",
     endpoint_id: "telegram.confirmation",
     confirmation_id: "telegram:503:database-confirmation",
     reply_language: "ms",
@@ -839,11 +868,12 @@ test("Telegram mixed interpretation previews all mutations before applying them"
       "40 Nasi Lemak Biasa pada RM5.00 setiap satu",
       "Kos Bekas Makanan naik RM2.00 (saiz pek belum diberi).",
     ],
+    clarification_fields: ["pack_size"],
   });
   assert.equal(store.listEvents({ type: "sale" }).length, 0);
   assert.equal(store.listEvents({ type: "cost" }).length, 0);
-  assert.match(replies[0].text, /Saya faham begini/);
-  assert.match(replies[0].text, /saiz pek belum diberi/);
+  assert.match(replies[0].text, /masih perlukan saiz pek/);
+  assert.match(replies[0].text, /Balas dengan butiran itu dahulu/);
 
   const confirmed = await ingestion.handleWebhook({
     headers: {
@@ -862,39 +892,22 @@ test("Telegram mixed interpretation previews all mutations before applying them"
   assert.equal(confirmed.body.state, "clarification_required");
   assert.deepEqual(confirmed.body.business_result, {
     state: "clarification_required",
-    operations: [
-      {
-        endpoint_id: "sales.create",
-        result: {
-          state: "committed",
-          event_id: "telegram-sale-001",
-          endpoint_id: "sales.create",
-          reply_language: "en",
-        },
-      },
-      {
-        endpoint_id: "cost-changes.create",
-        result: {
-          state: "clarification_required",
-          clarification_source: "message:telegram:503:cost-changes.create:2",
-          clarifications: [{
-            field: "pack_size",
-            question:
-              "Bekas Makanan increase RM2.00 applies to how many base units?",
-            options: ["50", "100", "other"],
-          }],
-          endpoint_id: "cost-changes.create",
-          reply_language: "en",
-        },
-      },
+    endpoint_id: "telegram.confirmation",
+    confirmation_id: "telegram:503:database-confirmation",
+    reply_language: "ms",
+    date: "2026-07-16",
+    details: [
+      "40 Nasi Lemak Biasa pada RM5.00 setiap satu",
+      "Kos Bekas Makanan naik RM2.00 (saiz pek belum diberi).",
     ],
+    clarification_fields: ["pack_size"],
   });
-  assert.equal(store.listEvents({ type: "sale" }).length, 1);
+  assert.equal(store.listEvents({ type: "sale" }).length, 0);
   assert.equal(store.listEvents({ type: "cost" }).length, 0);
   assert.equal(
     replies[1].text,
-    "Done, I've saved those sales.\n"
-      + "Bekas Makanan increase RM2.00 applies to how many base units?",
+    "Sebelum saya boleh simpan ini, saya masih perlukan saiz pek.\n"
+      + "Balas dengan butiran itu dahulu.",
   );
 });
 
@@ -961,7 +974,10 @@ test("Telegram voice purchases persist a draft and require text confirmation bef
     "ready_for_confirmation",
   );
   assert.equal(store.listEvents({ type: "cost" }).length, 0);
-  assert.match(replies[0].text, /Please confirm this cash purchase/);
+  assert.match(
+    replies[0].text,
+    /Before I save this cash purchase, please check/,
+  );
 
   const confirmed = await ingestion.handleWebhook({
     headers: {
@@ -979,7 +995,10 @@ test("Telegram voice purchases persist a draft and require text confirmation bef
   });
   assert.equal(confirmed.body.business_result.state, "committed");
   assert.equal(store.listEvents({ type: "cost" }).length, 1);
-  assert.equal(replies[1].text, "Done, I've saved that cost.");
+  assert.equal(
+    replies[1].text,
+    "Saved. That purchase is now included in product costs.",
+  );
 });
 
 test("Telegram purchase follow-ups preserve the original purchase date and cash metadata", async () => {
@@ -1113,12 +1132,7 @@ test("Telegram voice expense queries return read-only English and Chinese summar
       messageId: 1504,
       transcript: "How are my expenses looking now?",
       languageCode: "eng",
-      expectedReply:
-        "For 2026-07-15, sales are RM10.00 and gross profit "
-        + "is RM3.64 (36.40% margin).\n"
-        + "Recorded product costs are RM6.36.\n"
-        + "The biggest product costs are Telur (RM0.55 per pack).\n"
-        + "This is gross profit, so operating expenses are not included yet.",
+      expectedReply: "Recorded product costs for today are RM6.36.",
     },
     {
       updateId: 505,
@@ -1126,11 +1140,8 @@ test("Telegram voice expense queries return read-only English and Chinese summar
       transcript: "我的expense现在是怎样？",
       languageCode: "zho",
       expectedReply:
-        "2026-07-15 的生意情况：营业额 RM10.00，毛利 RM3.64"
-        + "（36.40%）。\n"
-        + "已记录的产品成本是 RM6.36。\n"
-        + "最大的产品成本来自：Telur（每份 RM0.55）。\n"
-        + "这是毛利，还没有扣除营运开支。",
+        "\u4eca\u5929\u5df2\u8bb0\u5f55\u7684\u4ea7\u54c1"
+        + "\u6210\u672c\u662f RM6.36\u3002",
     },
   ];
   let readCount = 0;
@@ -1221,7 +1232,7 @@ test("Telegram voice expense queries return read-only English and Chinese summar
     assert.deepEqual(replies, [{
       chatId: 9001,
       replyToMessageId: scenario.messageId,
-      text: scenario.expectedReply.replace("2026-07-15", "2026-07-16"),
+      text: scenario.expectedReply,
     }]);
   }
 

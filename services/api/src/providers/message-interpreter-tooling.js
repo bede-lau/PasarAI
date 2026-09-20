@@ -27,6 +27,17 @@ const replyLanguage = {
   type: "string",
   enum: REPLY_LANGUAGES,
 };
+const requestedMetric = {
+  type: "string",
+  enum: [
+    "overview",
+    "revenue",
+    "cogs",
+    "gross_profit",
+    "gross_margin",
+    "cost_drivers",
+  ],
+};
 
 export function trustedVoiceLanguage({ source, sourceLanguage }) {
   if (source !== "telegram_voice") return null;
@@ -146,6 +157,7 @@ export function buildSystemPrompt({
     "Never calculate money, percentages, totals, price floors, or differences. Copy exact merchant-stated inputs into tools; PasarAI performs all calculations and validation.",
     "Use only catalog IDs listed below. Ask for clarification when an entity is not an exact or unambiguous alias match.",
     "For current revenue, costs, expenses, COGS, gross profit, gross margin, cost drivers, or business performance, call get_daily_summary.",
+    "For a trend or change over time, call get_business_trend. Include a product only when it is explicitly named or unambiguous.",
     "Use capture_purchase for every cash purchase message, including partial details and corrections to the active draft. Include only values explicitly stated in this message.",
     "When a purchase draft is active, do not call capture_purchase for an unrelated question, greeting, or conversation that contains no purchase detail.",
     "Use record_cost_change for a relative component cost increase. Omit pack_size when the denominator is unknown so the business service can request it.",
@@ -362,15 +374,36 @@ export function buildTools({ products, components }) {
     {
       name: "get_daily_summary",
       description:
-        "Fetch the authoritative daily revenue, recorded COGS, gross profit, gross margin, completeness, and cost drivers.",
+        "Fetch an authoritative daily business metric or overview. Set requested_metric so PasarAI answers only what the merchant asked for.",
       strict: true,
       input_schema: objectSchema({
         date: {
           type: "string",
           pattern: "^20\\d{2}-\\d{2}-\\d{2}$",
         },
+        requested_metric: requestedMetric,
+        product_id: productId,
         reply_language: replyLanguage,
       }, ["date", "reply_language"]),
+    },
+    {
+      name: "get_business_trend",
+      description:
+        "Fetch an authoritative business or product trend over a bounded date range. PasarAI calculates the change from stored daily results.",
+      strict: true,
+      input_schema: objectSchema({
+        from: {
+          type: "string",
+          pattern: "^20\\d{2}-\\d{2}-\\d{2}$",
+        },
+        to: {
+          type: "string",
+          pattern: "^20\\d{2}-\\d{2}-\\d{2}$",
+        },
+        requested_metric: requestedMetric,
+        product_id: productId,
+        reply_language: replyLanguage,
+      }, ["from", "to", "requested_metric", "reply_language"]),
     },
     {
       name: "respond_to_merchant",
@@ -522,6 +555,12 @@ export function operationForToolUse(block, {
   if (block.name === "get_daily_summary") {
     return {
       endpoint_id: "daily-summary.get",
+      payload: input,
+    };
+  }
+  if (block.name === "get_business_trend") {
+    return {
+      endpoint_id: "business-trend.get",
       payload: input,
     };
   }

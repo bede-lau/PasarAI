@@ -191,7 +191,11 @@ export function GoogleSheetsSettings({
     try {
       const response = await fetcher(
         "/api/pasarai/integrations/google-sheets/export",
-        { method: "POST" }
+        {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ dates: [summaryDate] })
+        }
       );
       const result = await responseJson<GoogleSheetsSyncResponse>(response);
       if (result.operation !== "export") {
@@ -239,7 +243,11 @@ export function GoogleSheetsSettings({
     try {
       const response = await fetcher(
         "/api/pasarai/integrations/google-sheets/reconcile",
-        { method: "POST" }
+        {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ dates: [summaryDate] })
+        }
       );
       const result = await responseJson<GoogleSheetsSyncResponse>(response);
       if (result.operation !== "reconcile") {

@@ -74,8 +74,107 @@ function operationsFromToolCalls(toolCalls, {
   return operations;
 }
 
-async function localFallback(local, input) {
-  return local.interpret(input);
+const MAX_SALE_QUANTITY = 100_000;
+const MAX_UNIT_PRICE_RM = 10_000;
+
+function escapeRegex(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function plausibleSaleLines(lines) {
+  return Array.isArray(lines)
+    && lines.length > 0
+    && lines.every((line) => {
+      const quantity = Number.parseFloat(line?.quantity);
+      const unitPrice = Number.parseFloat(line?.unit_price_rm);
+      return Number.isFinite(quantity)
+        && Number.isFinite(unitPrice)
+        && quantity > 0
+        && quantity <= MAX_SALE_QUANTITY
+        && unitPrice > 0
+        && unitPrice <= MAX_UNIT_PRICE_RM;
+    });
+}
+
+function namesCatalogEntry(text, entries, entryId) {
+  const entry = entries.find(({ id }) => id === entryId);
+  if (!entry) return false;
+  return [entry.name, ...(entry.aliases ?? [])]
+    .filter(Boolean)
+    .some((alias) =>
+      new RegExp(
+        `\b${alias.trim().split(/\s+/).map(escapeRegex).join("\s+")}\b`,
+        "iu",
+      ).test(text)
+    );
+}
+
+function groundedOperations(selected, { text, source, products }) {
+  const operations = Array.isArray(selected) ? selected : [selected];
+  for (const operation of operations) {
+    if (operation?.endpoint_id === "sales.create") {
+      const lines = operation.payload?.lines;
+      if (!plausibleSaleLines(lines)) return null;
+      if (
+        source === "telegram_text"
+        && !lines.every(({ product_id: productId }) =>
+          namesCatalogEntry(text, products, productId)
+        )
+      ) {
+        return null;
+      }
+    }
+    if (operation?.endpoint_id === "cost-changes.create") {
+      const increase = Number.parseFloat(operation.payload?.increase_rm);
+      if (!Number.isFinite(increase) || increase <= 0) return null;
+    }
+  }
+  return selected;
+}
+
+function isDeterministicRetrieval(operation) {
+  return (
+    !Array.isArray(operation)
+    && (
+      operation?.endpoint_id === "daily-summary.get"
+      || operation?.endpoint_id === "business-trend.get"
+    )
+  );
+}
+
+function hasCompleteSale(operation) {
+  return operation?.endpoint_id === "sales.create"
+    && operation.payload?.lines?.length > 0
+    && operation.payload.lines.every((line) =>
+      line.product_id && line.quantity && line.unit_price_rm
+    );
+}
+
+function hasClearCostChange(operation) {
+  return operation?.endpoint_id === "cost-changes.create"
+    && operation.payload?.component_id
+    && operation.payload?.increase_rm;
+}
+
+function hasCompletePurchase(operation) {
+  const item = operation?.payload?.item;
+  return operation?.endpoint_id === "purchase-intake.upsert"
+    && operation.payload?.supplier_name
+    && item?.component_id
+    && item.quantity
+    && item.uom
+    && item.pack_size
+    && item.total_price_rm;
+}
+
+function isHighConfidenceTextFastPath(operation, source) {
+  if (source !== "telegram_text" || !operation) return false;
+  const operations = Array.isArray(operation) ? operation : [operation];
+  return operations.length > 0 && operations.every((candidate) =>
+    hasCompleteSale(candidate)
+    || hasClearCostChange(candidate)
+    || hasCompletePurchase(candidate)
+  );
 }
 
 export function createMessageInterpreter({
@@ -121,7 +220,14 @@ export function createMessageInterpreter({
 
     async interpret(input) {
       if (typeof input?.text !== "string" || !input.text.trim()) return null;
-      if (!apiKey) return localFallback(local, input);
+      const localResult = await local.interpret(input);
+      if (
+        isDeterministicRetrieval(localResult)
+        || isHighConfidenceTextFastPath(localResult, input.source)
+        || !apiKey
+      ) {
+        return localResult;
+      }
 
       const occurredAt = input.occurredAt ?? now();
       const activeCatalog = Array.isArray(input.componentCatalog)
@@ -202,10 +308,17 @@ export function createMessageInterpreter({
           },
         );
         const selected = operations ? selectOperations(operations) : null;
-        if (selected) return selected;
+        const grounded = selected
+          ? groundedOperations(selected, {
+              text: input.text,
+              source: input.source,
+              products: activeCatalog.products,
+            })
+          : null;
+        if (grounded) return grounded;
       }
 
-      return localFallback(local, input);
+      return localResult;
     },
   };
 }

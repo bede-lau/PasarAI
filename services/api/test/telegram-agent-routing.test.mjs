@@ -115,7 +115,7 @@ test("Telegram executes read-only price simulations and reports exact service va
           product_id: "p_nlb_001",
           quantity: "35",
           proposed_unit_price_rm: "5.50",
-          as_of: "2026-07-15",
+          as_of: "2026-07-16",
         });
         return {
           revenue_rm: "192.50",
@@ -141,11 +141,122 @@ test("Telegram executes read-only price simulations and reports exact service va
     chatId: 9001,
     replyToMessageId: 1702,
     text:
-      "Price simulation only; no ledger record was changed.\n"
-      + "RM192.50 revenue, RM111.30 COGS, RM81.20 gross profit "
-      + "(42.18% gross margin).\n"
-      + "Gross profit change versus today: RM8.40.\n"
-      + "Assumption: demand stays constant.",
+      "For this scenario, revenue would be RM192.50, "
+      + "product costs RM111.30, and gross profit RM81.20 "
+      + "(42.18% margin).\n"
+      + "That's RM8.40 more gross profit than the current scenario.\n"
+      + "I haven't changed any saved records. "
+      + "This assumes demand stays the same.",
+  }]);
+});
+
+test("Telegram retrieves the requested revenue and replies naturally", async () => {
+  let summaryCount = 0;
+  const { ingestion, replies } = createRoutingHarness({
+    operation: {
+      endpoint_id: "daily-summary.get",
+      payload: {
+        date: "2026-07-15",
+        requested_metric: "revenue",
+        reply_language: "en",
+      },
+    },
+    service: {
+      async getDailySummary(request) {
+        summaryCount += 1;
+        assert.deepEqual(request, {
+          merchantId: "m_kak_lina_001",
+          date: "2026-07-16",
+          productId: undefined,
+        });
+        return {
+          date: "2026-07-16",
+          revenue_rm: "250.00",
+          cogs_rm: "160.00",
+          gross_profit_rm: "90.00",
+          gross_margin_pct: "36.00",
+          top_cost_drivers: [],
+          data_completeness: {
+            state: "complete",
+            missing_inputs: [],
+          },
+        };
+      },
+    },
+  });
+
+  const response = await handle(
+    ingestion,
+    telegramBody(720, "What is the revenue for today?"),
+  );
+
+  assert.equal(response.body.state, "completed");
+  assert.equal(summaryCount, 1);
+  assert.deepEqual(replies, [{
+    chatId: 9001,
+    replyToMessageId: 1720,
+    text: "Today's revenue is RM250.00.",
+  }]);
+});
+
+test("Telegram retrieves a product revenue trend instead of repeating a script", async () => {
+  const requestedDates = [];
+  const revenueByDate = new Map([
+    ["2026-07-09", "180.00"],
+    ["2026-07-10", "190.00"],
+    ["2026-07-11", "200.00"],
+    ["2026-07-12", "210.00"],
+    ["2026-07-13", "220.00"],
+    ["2026-07-14", "230.00"],
+    ["2026-07-15", "250.00"],
+  ]);
+  const { ingestion, replies } = createRoutingHarness({
+    operation: {
+      endpoint_id: "business-trend.get",
+      payload: {
+        from: "2026-07-09",
+        to: "2026-07-15",
+        requested_metric: "revenue",
+        product_id: "p_nlb_001",
+        reply_language: "en",
+      },
+    },
+    service: {
+      async getDailySummary(request) {
+        requestedDates.push(request);
+        return {
+          date: request.date,
+          revenue_rm: revenueByDate.get(request.date),
+          cogs_rm: "100.00",
+          gross_profit_rm: "80.00",
+          gross_margin_pct: "40.00",
+          top_cost_drivers: [],
+          data_completeness: {
+            state: "complete",
+            missing_inputs: [],
+          },
+        };
+      },
+    },
+  });
+
+  const response = await handle(
+    ingestion,
+    telegramBody(
+      721,
+      "What is the revenue trend looking like for Nasi Lemak Biasa?",
+    ),
+  );
+
+  assert.equal(response.body.state, "completed");
+  assert.equal(requestedDates.length, 7);
+  assert.ok(requestedDates.every(({ productId }) => productId === "p_nlb_001"));
+  assert.deepEqual(replies, [{
+    chatId: 9001,
+    replyToMessageId: 1721,
+    text:
+      "Nasi Lemak Biasa revenue rose from RM180.00 to RM250.00 "
+      + "over the last 7 days, an increase of RM70.00.",
   }]);
 });
 
@@ -199,8 +310,9 @@ test("Telegram confirms append-only corrections before applying them", async () 
   assert.equal(correctionCount, 0);
   assert.match(
     replies[0].text,
-    /I understood this for 2026-07-15:\n- Correct sale-001: quantity: 40 -> 38/,
+    /Before I save anything, please check this for 16 Jul 2026:/
   );
+  assert.match(replies[0].text, /quantity from 40 to 38/);
 
   const confirmed = await handle(
     ingestion,
@@ -212,7 +324,7 @@ test("Telegram confirms append-only corrections before applying them", async () 
   assert.deepEqual(replies[1], {
     chatId: 9001,
     replyToMessageId: 1706,
-    text: "Done, I've saved the correction: quantity: 40 -> 38.",
+    text: "Done, I've saved the correction: quantity from 40 to 38.",
   });
 });
 
@@ -255,7 +367,7 @@ test("Telegram keeps rejected confirmations pending and names what needs clarifi
   assert.equal(response.body.state, "confirmation_required");
   assert.match(
     replies[0].text,
-    /I understood this for 2026-07-15/,
+    /Before I save anything, please check this for 16 Jul 2026/,
   );
   assert.doesNotMatch(replies[0].text, /database|p_nlb_001/i);
 
@@ -269,14 +381,14 @@ test("Telegram keeps rejected confirmations pending and names what needs clarifi
     endpoint_id: "telegram.confirmation",
     confirmation_id: "telegram:704:database-confirmation",
     reply_language: "en",
-    date: "2026-07-15",
+    date: "2026-07-16",
     details: [
       "40 Nasi Lemak Biasa at RM5.00 each",
     ],
     clarification_fields: ["unit_price"],
   });
-  assert.match(replies[1].text, /unit price needs clarification/i);
-  assert.match(replies[1].text, /restate the update/i);
+  assert.match(replies[1].text, /still need the unit price/i);
+  assert.match(replies[1].text, /send that information first/i);
   assert.doesNotMatch(replies[1].text, /unit_price_rm|pattern|\/lines\//);
   assert.equal(
     (await eventStore.getPendingConfirmation({
@@ -445,7 +557,7 @@ test("a pending write allows a read-only business summary", async () => {
   assert.equal(mutationCount, 0);
   assert.equal(
     replies[1].text,
-    "For 2026-07-15, sales are RM250.00 and gross profit "
+    "For 15 Jul 2026, sales are RM250.00 and gross profit "
       + "is RM90.00 "
       + "(36.00% margin).\n"
       + "Recorded product costs are RM160.00.\n"
@@ -555,11 +667,127 @@ test("a newer mutation replaces the pending update and refreshes its product sum
   });
   assert.equal(
     replies[2].text,
-    "Done, I've saved this for 2026-07-15:\n"
+    "Saved for 16 Jul 2026:\n"
       + "- 40 Nasi Lemak Biasa at RM5.00 each",
   );
   assert.equal(summary.body.state, "completed");
   assert.match(replies[3].text, /sales are RM200.00/);
+});
+
+test("a mixed sale and cost update waits for the missing pack size and saves both once", async () => {
+  let saleCount = 0;
+  let costChangeCount = 0;
+  const { ingestion, replies, eventStore } = createRoutingHarness({
+    operation: ({ text }) => {
+      if (text === "Hari ini jual 40 nasi lemak biasa RM5. Bekas naik RM2.") {
+        return [
+          {
+            endpoint_id: "sales.create",
+            payload: {
+              occurred_at: "2026-07-16T10:00:00+08:00",
+              source: "telegram_text",
+              source_language: "ms",
+              reply_language: "ms",
+              lines: [{
+                product_id: "p_nlb_001",
+                quantity: "40",
+                unit_price_rm: "5.00",
+              }],
+            },
+          },
+          {
+            endpoint_id: "cost-changes.create",
+            payload: {
+              occurred_at: "2026-07-16T10:00:00+08:00",
+              source: "telegram_text",
+              source_language: "ms",
+              reply_language: "ms",
+              component_id: "c_packaging",
+              increase_rm: "2.00",
+            },
+          },
+        ];
+      }
+      if (text === "Untuk 50 bekas.") {
+        return {
+          endpoint_id: "cost-changes.create",
+          payload: {
+            occurred_at: "2026-07-16T10:02:00+08:00",
+            source: "telegram_text",
+            source_language: "ms",
+            reply_language: "ms",
+            component_id: "c_packaging",
+            pack_size: "50",
+          },
+        };
+      }
+      throw new Error(`Unexpected interpretation request: ${text}`);
+    },
+    service: {
+      async recordSale(request, { idempotencyKey }) {
+        saleCount += 1;
+        assert.equal(idempotencyKey, "telegram:730:sales.create:1");
+        assert.match(request.evidence.transcript, /Hari ini jual 40/);
+        assert.match(request.evidence.transcript, /Untuk 50 bekas/);
+        return { state: "committed", event_id: "sale-mixed-001" };
+      },
+      async recordCostChange(request, { idempotencyKey }) {
+        costChangeCount += 1;
+        assert.equal(
+          idempotencyKey,
+          "telegram:730:cost-changes.create:2",
+        );
+        assert.equal(request.increase_rm, "2.00");
+        assert.equal(request.pack_size, "50");
+        return {
+          state: "committed",
+          event_id: "cost-change-mixed-001",
+        };
+      },
+    },
+  });
+
+  const staged = await handle(
+    ingestion,
+    telegramBody(
+      730,
+      "Hari ini jual 40 nasi lemak biasa RM5. Bekas naik RM2.",
+    ),
+  );
+  const prematureConfirmation = await handle(
+    ingestion,
+    telegramBody(731, "sahkan"),
+  );
+  const completedDetails = await handle(
+    ingestion,
+    telegramBody(732, "Untuk 50 bekas."),
+  );
+  const confirmed = await handle(
+    ingestion,
+    telegramBody(733, "sahkan"),
+  );
+
+  assert.equal(staged.body.state, "clarification_required");
+  assert.equal(prematureConfirmation.body.state, "clarification_required");
+  assert.equal(completedDetails.body.state, "confirmation_required");
+  assert.equal(confirmed.body.state, "committed");
+  assert.equal(saleCount, 1);
+  assert.equal(costChangeCount, 1);
+  assert.match(replies[0].text, /saiz pek/);
+  assert.match(replies[1].text, /saiz pek/);
+  assert.match(replies[2].text, /40 Nasi Lemak Biasa/);
+  assert.match(replies[2].text, /50 unit asas/);
+  assert.match(replies[2].text, /16 Jul 2026/);
+  assert.doesNotMatch(replies[2].text, /\bfor\b/i);
+  assert.match(replies[3].text, /jualan itu sudah disimpan/i);
+  assert.match(replies[3].text, /perubahan kos itu sudah disimpan/i);
+  assert.equal(
+    await eventStore.getPendingConfirmation({
+      merchantId: "m_kak_lina_001",
+      conversationKey: "telegram:9001",
+    }),
+    null,
+  );
 });
 
 test("an active purchase draft blocks unrelated model-produced mutations", async () => {
@@ -631,7 +859,7 @@ test("an active purchase draft blocks unrelated model-produced mutations", async
     chatId: 9001,
     replyToMessageId: 1705,
     text:
-      "Your cash purchase is still waiting for a missing detail, "
-      + "confirmation, or cancellation.",
+      "We still have a cash purchase in progress. Send the missing detail, "
+      + 'or reply "confirm" or "cancel".',
   }]);
 });

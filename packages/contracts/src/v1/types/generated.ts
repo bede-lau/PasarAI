@@ -227,6 +227,7 @@ export type GoogleSheetsDisconnectResponse = {
 };
 
 export type GoogleSheetsExportRequest = {
+  readonly "product_id"?: Identifier;
   readonly "dates"?: ReadonlyArray<Date>;
 };
 
@@ -252,7 +253,8 @@ export type GoogleSheetsOAuthStartResponse = {
 };
 
 export type GoogleSheetsReconcileRequest = {
-
+  readonly "product_id"?: Identifier;
+  readonly "dates"?: ReadonlyArray<Date>;
 };
 
 export type GoogleSheetsStatusResponse = {

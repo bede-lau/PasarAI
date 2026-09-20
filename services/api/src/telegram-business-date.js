@@ -82,6 +82,14 @@ function dateInTimeZone(value, timeZone) {
     : null;
 }
 
+function shiftCalendarDate(date, days) {
+  if (!date) return null;
+  const shifted = new Date(`${date}T00:00:00.000Z`);
+  if (Number.isNaN(shifted.valueOf())) return null;
+  shifted.setUTCDate(shifted.getUTCDate() + days);
+  return shifted.toISOString().slice(0, 10);
+}
+
 function offsetAt(value, timeZone) {
   const parts = dateTimeParts(value, timeZone);
   if (!parts) return 0;
@@ -120,33 +128,39 @@ function instantOnBusinessDate(date, occurredAt, timeZone) {
   return new Date(instant).toISOString();
 }
 
-function explicitDate(text, fallbackYear) {
-  if (typeof text !== "string" || !text.trim()) return null;
+const NO_STATED_DATE = Object.freeze({ stated: false, date: null });
+
+function statedDateResult(date) {
+  return { stated: true, date };
+}
+
+function statedDate(text, fallbackYear) {
+  if (typeof text !== "string" || !text.trim()) return NO_STATED_DATE;
 
   const iso = /\b(20\d{2}-\d{2}-\d{2})\b/u.exec(text)?.[1];
   if (iso) {
     const [year, month, day] = iso.split("-").map(Number);
-    return calendarDate(year, month, day);
+    return statedDateResult(calendarDate(year, month, day));
   }
 
   const numeric = /\b(\d{1,2})[/-](\d{1,2})[/-](20\d{2})\b/u.exec(text);
   if (numeric) {
-    return calendarDate(
+    return statedDateResult(calendarDate(
       Number(numeric[3]),
       Number(numeric[2]),
       Number(numeric[1]),
-    );
+    ));
   }
 
   const chinese =
     /(?:(20\d{2})\s*\u5e74\s*)?(\d{1,2})\s*\u6708\s*(\d{1,2})\s*\u65e5?/u
       .exec(text);
   if (chinese) {
-    return calendarDate(
+    return statedDateResult(calendarDate(
       Number(chinese[1] ?? fallbackYear),
       Number(chinese[2]),
       Number(chinese[3]),
-    );
+    ));
   }
 
   const monthFirst = new RegExp(
@@ -155,11 +169,11 @@ function explicitDate(text, fallbackYear) {
     "iu",
   ).exec(text);
   if (monthFirst) {
-    return calendarDate(
+    return statedDateResult(calendarDate(
       Number(monthFirst[3] ?? fallbackYear),
       MONTH_NUMBERS.get(monthFirst[1].toLowerCase()),
       Number(monthFirst[2]),
-    );
+    ));
   }
 
   const dayFirst = new RegExp(
@@ -168,14 +182,27 @@ function explicitDate(text, fallbackYear) {
     "iu",
   ).exec(text);
   if (dayFirst) {
-    return calendarDate(
+    return statedDateResult(calendarDate(
       Number(dayFirst[3] ?? fallbackYear),
       MONTH_NUMBERS.get(dayFirst[2].toLowerCase()),
       Number(dayFirst[1]),
-    );
+    ));
   }
 
-  return null;
+  return NO_STATED_DATE;
+}
+
+function explicitDate(text, fallbackYear) {
+  return statedDate(text, fallbackYear).date;
+}
+
+export function statedTelegramDateIsInvalid({
+  text,
+  defaultBusinessDate = DEFAULT_TELEGRAM_BUSINESS_DATE,
+}) {
+  const fallbackYear = Number(String(defaultBusinessDate).slice(0, 4));
+  const result = statedDate(text, fallbackYear);
+  return result.stated && result.date === null;
 }
 
 export function resolveTelegramBusinessDate({
@@ -184,11 +211,22 @@ export function resolveTelegramBusinessDate({
   defaultBusinessDate = DEFAULT_TELEGRAM_BUSINESS_DATE,
   timeZone = DEFAULT_TELEGRAM_TIME_ZONE,
 }) {
+  const currentDate = dateInTimeZone(occurredAt, timeZone);
   const fallbackDate = calendarDate(
     ...String(defaultBusinessDate).split("-").map(Number),
-  ) ?? dateInTimeZone(occurredAt, timeZone);
+  ) ?? currentDate;
   if (!fallbackDate) return null;
-  return explicitDate(text, Number(fallbackDate.slice(0, 4))) ?? fallbackDate;
+  const statedDate = explicitDate(
+    text,
+    Number(fallbackDate.slice(0, 4)),
+  );
+  if (statedDate) return statedDate;
+  if (
+    /\b(?:yesterday|semalam)\b|(?:昨天)/iu.test(text)
+  ) {
+    return shiftCalendarDate(fallbackDate, -1);
+  }
+  return fallbackDate;
 }
 
 export function resolveTelegramOccurredAt({

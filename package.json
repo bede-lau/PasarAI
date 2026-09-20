@@ -31,6 +31,8 @@
     "seed:synthetic:reset": "node scripts/seed/reset-synthetic.mjs",
     "demo:reset": "node scripts/seed/reset-demo.mjs",
     "demo:rehearse": "node scripts/seed/rehearse-demo.mjs",
+    "demo:telegram:qa": "node --env-file-if-exists=services/api/.env scripts/qa/telegram-text-smoke.mjs",
+    "demo:telegram:edge": "node --env-file-if-exists=services/api/.env scripts/qa/telegram-edge-probe.mjs",
     "scope:check": "node scripts/quality/check-scope.mjs",
     "security:check": "node scripts/security/check-unsafe-values.mjs",
     "contracts:generate": "pnpm --filter @pasarai/contracts generate",

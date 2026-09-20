@@ -311,7 +311,9 @@ describe("Google Sheets BFF", () => {
     expect(url.toString()).toBe(
       "http://upstream.test/api/v1/integrations/google-sheets/reconcile"
     );
-    expect(options.body).toBe("{}");
+    expect(JSON.parse(options.body)).toEqual({
+      product_id: "p_production_001"
+    });
     expect(options.headers.authorization).toBe("Bearer SERVER_ONLY_TOKEN");
     expect(options.headers["idempotency-key"]).toMatch(
       /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
@@ -492,7 +494,15 @@ describe("Google Sheets BFF", () => {
     expect(url.toString()).toBe(
       `http://upstream.test/api/v1/integrations/google-sheets/${path}`
     );
-    expect(options.body).toBe("{}");
+    expect(
+      path === "export"
+        ? JSON.parse(options.body)
+        : options.body
+    ).toEqual(
+      path === "export"
+        ? { product_id: "p_production_001" }
+        : "{}"
+    );
     expect(options.headers.authorization).toBe("Bearer SERVER_ONLY_TOKEN");
     expect(options.headers["idempotency-key"]).toMatch(
       /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i

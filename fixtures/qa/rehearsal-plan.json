@@ -24,13 +24,13 @@
       "id": "dashboard",
       "duration_seconds": 20,
       "operator_action": "Reveal the dashboard margin and four cost drivers.",
-      "success_signal": "RM200.00 revenue, RM72.80 gross profit, 36.40% margin, and a 5.60 point decline are visible."
+      "success_signal": "RM200.00 revenue, RM71.20 gross profit, 35.60% margin, RM2.50 baseline cost, and RM3.22 current cost are visible."
     },
     {
       "id": "mandarin_simulation",
       "duration_seconds": 25,
       "operator_action": "Perform VN-04 in Mandarin.",
-      "success_signal": "The read-only answer states RM192.50 revenue, RM81.20 gross profit, and 42.18% margin with assumptions."
+      "success_signal": "The read-only answer states RM192.50 revenue, RM79.80 gross profit, and 41.45% margin with the RM3.22 current-cost assumption."
     },
     {
       "id": "close",
@@ -62,7 +62,7 @@
     },
     {
       "failure": "golden_metric_mismatch",
-      "action": "Stop the financial walkthrough and open expected_metrics.json.",
+      "action": "Stop the financial walkthrough and open fixtures/demo/current-snapshot.json.",
       "disclosure": "Do not alter expected values or improvise replacement numbers."
     }
   ]

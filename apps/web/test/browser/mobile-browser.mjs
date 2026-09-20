@@ -884,7 +884,7 @@ test("supports receipt review edits and reaches the confirmed state at 390px", a
   const restored = await waitForExpression(
     connection,
     "saved receipt reload",
-    `document.querySelector('input[aria-label="Supplier"]')?.value ===
+    `document.querySelector("#receipt-review-heading")?.textContent.trim() ===
       "Pasar Pagi SS2"`
   );
   assert.equal(restored, true);
@@ -894,18 +894,32 @@ test("supports receipt review edits and reaches the confirmed state at 390px", a
       'img[alt="Pasar Pagi SS2 receipt source evidence"]'
     )?.getAttribute("src")`
   );
-  assert.match(persistedImage, /^data:image\/jpeg;base64,/u);
+  assert.equal(persistedImage, receiptUpload.evidence_uri);
 
-  await clickBySelector(
-    'button[aria-label="Delete Pasar Pagi SS2 receipt"]'
-  );
-  const deleted = await waitForExpression(
+  const verifiedReceiptIsReadOnly = await evaluate(
     connection,
-    "saved receipt deletion",
-    `!document.body.innerText.includes("Pasar Pagi SS2") &&
-      localStorage.length === 0`
+    `(() => {
+      const heading = document.querySelector("#receipt-review-heading");
+      return {
+        supplier: heading?.textContent.trim() ?? null,
+        verified: document.body.innerText.includes("Verified"),
+        editable: Boolean(
+          document.querySelector('input[aria-label="Supplier"]')
+        ),
+        deletable: Boolean(
+          document.querySelector(
+            'button[aria-label="Delete Pasar Pagi SS2 receipt"]'
+          )
+        )
+      };
+    })()`
   );
-  assert.equal(deleted, true);
+  assert.deepEqual(verifiedReceiptIsReadOnly, {
+    supplier: "Pasar Pagi SS2",
+    verified: true,
+    editable: false,
+    deletable: false
+  });
   await assertNoHorizontalOverflow("receipt confirmation");
 });
 

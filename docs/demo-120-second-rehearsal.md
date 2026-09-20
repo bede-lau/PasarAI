@@ -44,12 +44,12 @@ rehearsal, not optional commentary.
 ### `golden_metric_mismatch`
 
 - Stop the financial walkthrough.
-- Open `fixtures/synthetic/seed_data/expected_metrics.json`.
+- Open `fixtures/demo/current-snapshot.json`.
 - Do not claim replacement numbers and never change expected values on stage.
 
 ## Recovery checklist
 
-- Expected metrics JSON is open locally.
+- `fixtures/demo/current-snapshot.json` is open locally.
 - Receipt 002 review path is ready.
 - Last materialized Gold snapshot is available.
 - Matching text fixtures are ready for voice fallback.

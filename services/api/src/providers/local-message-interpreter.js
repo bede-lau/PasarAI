@@ -97,10 +97,41 @@ const NUMBER_REPLACEMENTS = [
 
 const MALAY_TERMS = /\b(?:hari ni|habis|bungkus|jual|naik|telur|bekas|santan|beras|timun)\b/i;
 const ENGLISH_TERMS = /\b(?:today|sold|packaging|cost|ringgit|bought|customer|at|each)\b/i;
-const EXPENSE_QUERY_TERMS =
-  /\b(?:expenses?|costs?|spending|belanja|perbelanjaan|kos)\b|(?:开支|支出|成本|费用|花费)/iu;
-const EXPENSE_QUERY_CUES =
+const BUSINESS_QUERY_CUES =
   /\b(?:how|what|show|tell|looking|today|now|current|berapa|bagaimana|macam mana|hari ini|sekarang)\b|(?:怎样|怎么样|如何|多少|情况|现在|今天|目前)|[?？]/iu;
+const BUSINESS_SCOPE_TERMS =
+  /\b(?:business|shop|store|product|performance|figures?|numbers?|perniagaan|kedai|produk|prestasi)\b|(?:生意|业务|产品|表现)/iu;
+const TREND_QUERY_CUES =
+  /\b(?:trends?|trending|over time|this week|last week|past week|minggu ini|trend)\b|(?:趋势|这周|本周)/iu;
+const SIMULATION_CUES =
+  /\b(?:what if|if i|suppose|simulate|simulation|scenario|kalau|jika|andaikan)\b|(?:如果|假如)/iu;
+const BUSINESS_METRICS = [
+  {
+    id: "cost_drivers",
+    pattern:
+      /\b(?:cost drivers?|biggest costs?|highest costs?|main costs?|costs?\s+(?:are|is)\s+(?:the\s+)?(?:biggest|highest|largest)|pemacu kos|kos terbesar)\b|(?:主要成本|最大成本)/iu,
+  },
+  {
+    id: "gross_margin",
+    pattern:
+      /\b(?:gross margin|margin kasar|profit margin)\b|(?:毛利率)/iu,
+  },
+  {
+    id: "gross_profit",
+    pattern:
+      /\b(?:gross profit|untung kasar)\b|(?:毛利)/iu,
+  },
+  {
+    id: "revenue",
+    pattern:
+      /\b(?:revenue|sales?|turnover|jualan|hasil|pendapatan)\b|(?:营业额|营收|销售额)/iu,
+  },
+  {
+    id: "cogs",
+    pattern:
+      /\b(?:cogs|expenses?|costs?|spending|belanja|perbelanjaan|kos)\b|(?:开支|支出|成本|费用|花费)/iu,
+  },
+];
 
 function escapeRegex(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -178,6 +209,20 @@ export function loadMessageInterpreterCatalog({
       DEFAULT_COMPONENTS,
     ),
   };
+}
+
+const MAX_SALE_QUANTITY = 100_000;
+const MAX_UNIT_PRICE_RM = 10_000;
+
+function plausibleSaleLine(quantity, unitPriceRm) {
+  const quantityValue = Number.parseFloat(quantity);
+  const priceValue = Number.parseFloat(unitPriceRm);
+  return Number.isFinite(quantityValue)
+    && Number.isFinite(priceValue)
+    && quantityValue > 0
+    && quantityValue <= MAX_SALE_QUANTITY
+    && priceValue > 0
+    && priceValue <= MAX_UNIT_PRICE_RM;
 }
 
 function decimalString(value) {
@@ -272,34 +317,88 @@ function dateInTimeZone(value, timeZone) {
   return `${values.year}-${values.month}-${values.day}`;
 }
 
+function shiftCalendarDate(date, days) {
+  const match = /^(20\d{2})-(\d{2})-(\d{2})$/.exec(date);
+  if (!match) return null;
+  const shifted = new Date(Date.UTC(
+    Number(match[1]),
+    Number(match[2]) - 1,
+    Number(match[3]) + days,
+  ));
+  return shifted.toISOString().slice(0, 10);
+}
+
+function requestedBusinessMetric(text) {
+  return BUSINESS_METRICS.find(({ pattern }) => pattern.test(text))?.id
+    ?? null;
+}
+
+export function detectReplyLanguage(text, sourceLanguage) {
+  return replyLanguage(text, sourceLanguage);
+}
+
+function replyLanguage(text, sourceLanguage) {
+  const detected = detectLanguage(text, sourceLanguage);
+  if (detected === "zh") return "zh";
+  return detected.startsWith("ms") ? "ms" : "en";
+}
+
 function dailySummaryOperation({
   text,
+  products,
   occurredAt,
   sourceLanguage,
   timeZone,
 }) {
+  if (SIMULATION_CUES.test(text)) return null;
   const queryText = text.replace(/\bssi\b/gi, "expenses");
+  const requestedMetric = requestedBusinessMetric(queryText);
+  const trendRequested = TREND_QUERY_CUES.test(queryText);
   if (
-    !EXPENSE_QUERY_TERMS.test(queryText)
-    || !EXPENSE_QUERY_CUES.test(queryText)
+    !requestedMetric
+    && !BUSINESS_SCOPE_TERMS.test(queryText)
   ) {
     return null;
   }
+  if (!trendRequested && !BUSINESS_QUERY_CUES.test(queryText)) return null;
 
   const explicitDate = /\b(20\d{2}-\d{2}-\d{2})\b/.exec(text)?.[1];
-  const date = explicitDate ?? dateInTimeZone(occurredAt, timeZone);
+  const currentDate = dateInTimeZone(occurredAt, timeZone);
+  const date = explicitDate
+    ?? (/\b(?:yesterday|semalam)\b/i.test(queryText)
+      ? shiftCalendarDate(currentDate, -1)
+      : currentDate);
   if (!date) return null;
 
-  const detectedLanguage = detectLanguage(text, sourceLanguage);
+  const language = replyLanguage(text, sourceLanguage);
+  const product = findCatalogMatch(queryText, products);
+  if (trendRequested) {
+    const requestedDays = Number.parseInt(
+      /\b(?:last|past)\s+(\d{1,2})\s+days?\b/i.exec(queryText)?.[1] ?? "7",
+      10,
+    );
+    const days = Math.min(31, Math.max(2, requestedDays));
+    const from = shiftCalendarDate(date, -(days - 1));
+    if (!from) return null;
+    return {
+      endpoint_id: "business-trend.get",
+      payload: {
+        from,
+        to: date,
+        requested_metric: requestedMetric ?? "overview",
+        ...(product ? { product_id: product.entry.id } : {}),
+        reply_language: language,
+      },
+    };
+  }
+
   return {
     endpoint_id: "daily-summary.get",
     payload: {
       date,
-      reply_language: detectedLanguage === "zh"
-        ? "zh"
-        : detectedLanguage.startsWith("ms")
-          ? "ms"
-          : "en",
+      requested_metric: requestedMetric ?? "overview",
+      ...(product ? { product_id: product.entry.id } : {}),
+      reply_language: language,
     },
   };
 }
@@ -311,6 +410,7 @@ function salesOperation({
   source,
   sourceLanguage,
 }) {
+  if (SIMULATION_CUES.test(text)) return null;
   const candidates = [];
   const unitPattern = "(?:bungkus|packs?|packets?|cups?|units?)";
   const priceCue = "(?:at|@|pada|semua|for|harga(?:nya)?|each)";
@@ -318,11 +418,11 @@ function salesOperation({
   for (const product of products) {
     for (const alias of aliasesFor(product)) {
       const pattern = new RegExp(
-        `(\\d+(?:\\.\\d+)?)\\s*`
+        `(?<![\\d.,\\-])(\\d+(?:\\.\\d+)?)(?!\\d)(?![.,]\\d)(?![eE][+-]?\\d)\\s*`
         + `(?:${unitPattern}\\s*)?`
         + `${aliasPattern(alias)}\\b`
         + `[\\s,]*(?:${priceCue}\\s*)?`
-        + `(?:rm\\s*)?(\\d+(?:\\.\\d+)?)`
+        + `(?:rm\\s*)?(?<![\\d.,\\-])(\\d+(?:\\.\\d+)?)(?!\\d)(?![.,]\\d)(?![eE][+-]?\\d)`
         + `(?:\\s*(?:ringgit|each))?`,
         "i",
       );
@@ -331,6 +431,7 @@ function salesOperation({
       const quantity = decimalString(match[1]);
       const unitPriceRm = myrString(match[2]);
       if (!quantity || !unitPriceRm) continue;
+      if (!plausibleSaleLine(quantity, unitPriceRm)) continue;
       candidates.push({
         index: match.index,
         aliasLength: alias.length,
@@ -381,31 +482,31 @@ function purchaseOperation({
   const unitPattern =
     "(trays?|bundles?|packs?|bags?|sacks?|boxes?|units?|kg|g|litres?|liters?|bottles?)";
   const unitPrice = new RegExp(
-    `(?:rm\\s*)?(\\d+(?:\\.\\d+)?)\\s*`
+    `(?:rm\\s*)?(?<![\\d.,\\-])(\\d+(?:\\.\\d+)?)(?!\\d)(?![.,]\\d)(?![eE][+-]?\\d)\\s*`
     + `(?:ringgit\\s*)?(?:per|\\/)\\s*${unitPattern}`
-    + `(?:\\s*(?:of|isi|contains?)\\s*(\\d+(?:\\.\\d+)?))?`,
+    + `(?:\\s*(?:of|isi|contains?)\\s*(?<![\\d.,\\-])(\\d+(?:\\.\\d+)?)(?!\\d)(?![.,]\\d)(?![eE][+-]?\\d))?`,
     "i",
   ).exec(text);
   const purchased = new RegExp(
     `(?:\\b(?:bought|purchased|buy|beli)\\s*)?`
-    + `(\\d+(?:\\.\\d+)?)\\s*${unitPattern}\\b`,
+    + `(?<![\\d.,\\-])(\\d+(?:\\.\\d+)?)(?!\\d)(?![.,]\\d)(?![eE][+-]?\\d)\\s*${unitPattern}\\b`,
     "i",
   ).exec(text);
   const packSize =
-    /(?:of|isi|contains?|each has|setiap)\s*(\d+(?:\.\d+)?)/i.exec(text)
-    ?? /(\d+(?:\.\d+)?)\s*(?:each|setiap)\b/i.exec(text);
+    /(?:of|isi|contains?|each has|setiap)\s*(?<![\d.,\-])(\d+(?:\.\d+)?)(?!\d)(?![.,]\d)(?![eE][+-]?\d)/i.exec(text)
+    ?? /(?<![\d.,\-])(\d+(?:\.\d+)?)(?!\d)(?![.,]\d)(?![eE][+-]?\d)\s*(?:each|setiap)\b/i.exec(text);
   const supplier = /\b(?:from|daripada|dari)\s+([^.!?]+?)(?:[.!?]|$)/i.exec(
     originalText,
   );
   const markedTotal =
-    /(?:total|jumlah|for|harga(?:nya)?)\s*(?:rm\s*)?(\d+(?:\.\d+)?)/i
+    /(?:total|jumlah|for|harga(?:nya)?)\s*(?:rm\s*)?(?<![\d.,\-])(\d+(?:\.\d+)?)(?!\d)(?![.,]\d)(?![eE][+-]?\d)/i
       .exec(text)
-    ?? /rm\s*(\d+(?:\.\d+)?)\s*(?:total|jumlah)/i.exec(text);
+    ?? /rm\s*(?<![\d.,\-])(\d+(?:\.\d+)?)(?!\d)(?![.,]\d)(?![eE][+-]?\d)\s*(?:total|jumlah)/i.exec(text);
   const explicitTotal = markedTotal
     ?? (
       unitPrice
         ? null
-        : /rm\s*(\d+(?:\.\d+)?)/i.exec(text)
+        : /rm\s*(?<![\d.,\-])(\d+(?:\.\d+)?)(?!\d)(?![.,]\d)(?![eE][+-]?\d)/i.exec(text)
     );
 
   const item = {};
@@ -475,7 +576,7 @@ function purchaseOperation({
 
 function nearestMoney(text, index) {
   const matches = [];
-  const pattern = /(?:rm\s*(\d+(?:\.\d+)?)|(\d+(?:\.\d+)?)\s*ringgit)/gi;
+  const pattern = /(?:rm\s*(?<![\d.,\-])(\d+(?:\.\d+)?)(?!\d)(?![.,]\d)(?![eE][+-]?\d)|(?<![\d.,\-])(\d+(?:\.\d+)?)(?!\d)(?![.,]\d)(?![eE][+-]?\d)\s*ringgit)/gi;
   for (const match of text.matchAll(pattern)) {
     matches.push({
       value: match[1] ?? match[2],
@@ -494,8 +595,8 @@ function costChangeOperation({ text, components, occurredAt }) {
   const increaseRm = myrString(nearestMoney(text, cue.index));
   if (!increaseRm) return null;
 
-  const packSize = /(?:per|for|untuk)\s*(?:1\s*)?(?:bundle|pack|pek|tray)?\s*(?:of|isi)?\s*(\d+(?:\.\d+)?)/i.exec(text)
-    ?? /(?:bundle|pack|pek|tray)\s*(?:of|isi)?\s*(\d+(?:\.\d+)?)/i.exec(text);
+  const packSize = /(?:per|for|untuk)\s*(?:1\s*)?(?:bundle|pack|pek|tray)?\s*(?:of|isi)?\s*(?<![\d.,\-])(\d+(?:\.\d+)?)(?!\d)(?![.,]\d)(?![eE][+-]?\d)/i.exec(text)
+    ?? /(?:bundle|pack|pek|tray)\s*(?:of|isi)?\s*(?<![\d.,\-])(\d+(?:\.\d+)?)(?!\d)(?![.,]\d)(?![eE][+-]?\d)/i.exec(text);
   const normalizedPackSize = packSize ? decimalString(packSize[1]) : null;
 
   return {
@@ -548,6 +649,7 @@ export function createMessageInterpreter({
       if (purchaseIntake) {
         const summary = dailySummaryOperation({
           text: normalized,
+          products,
           occurredAt: timestamp,
           sourceLanguage,
           timeZone: environment.PASARAI_TIME_ZONE
@@ -616,6 +718,7 @@ export function createMessageInterpreter({
       if (!operations.length) {
         return dailySummaryOperation({
           text: normalized,
+          products,
           occurredAt: timestamp,
           sourceLanguage,
           timeZone: environment.PASARAI_TIME_ZONE

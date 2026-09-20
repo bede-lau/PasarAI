@@ -111,6 +111,11 @@ test("demo snapshot keeps July 15 cheaper than every July 16 component", () => {
   );
   assert.equal(demoSnapshot.metrics.baseline_unit_cogs_rm, "2.50");
   assert.equal(demoSnapshot.metrics.current_unit_cogs_rm, "3.22");
+  assert.equal(demoSnapshot.costs.length, 9);
+  assert.deepEqual(
+    new Set(demoSnapshot.costs.map(({ component_id }) => component_id)),
+    new Set(demoSnapshot.components.map(({ component_id }) => component_id)),
+  );
   assert.ok(demoSnapshot.components.every((component) =>
     Number(component.baseline_cost_per_pack_rm)
       < Number(component.current_cost_per_pack_rm)
@@ -138,6 +143,8 @@ test("demo reset replaces scoped business state and restores append-only trigger
     baselineUnitCogsRm: "2.50",
     currentUnitCogsRm: "3.22",
     componentCount: 9,
+    costEventCount: 9,
+    inputRecordCount: 10,
   });
   assert.ok(calls.some(({ text }) =>
     text === "ALTER TABLE raw_events DISABLE TRIGGER raw_events_append_only"
@@ -169,6 +176,10 @@ test("demo reset replaces scoped business state and restores append-only trigger
     && /demo_reset_event_ids/u.test(text)
   ));
   assert.ok(calls.some(({ text, values }) =>
+    /DELETE FROM google_sheet_row_state/u.test(text)
+    && values[0] === "m_kak_lina_001"
+  ));
+  assert.ok(calls.some(({ text, values }) =>
     /DELETE FROM recipe_components/u.test(text)
     && values[0] === "m_kak_lina_001"
     && values[1] === "p_nlb_001"
@@ -183,4 +194,11 @@ test("demo reset replaces scoped business state and restores append-only trigger
     /INSERT INTO raw_events/u.test(text)
     && values[0] === "demo_sale_2026_07_16"
   ));
+  assert.equal(
+    calls.filter(({ text, values }) =>
+      /INSERT INTO raw_events/u.test(text)
+      && String(values[0]).startsWith("demo_cost_2026_07_16_")
+    ).length,
+    9,
+  );
 });

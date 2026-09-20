@@ -49,6 +49,42 @@ test("Telegram client resolves file metadata and downloads the media bytes", asy
   );
 });
 
+test("Telegram client recognizes JPEG photos served as octet-stream", async () => {
+  const image = Buffer.from([
+    0xff, 0xd8, 0xff, 0xe0,
+    0x00, 0x10, 0x4a, 0x46,
+    0x49, 0x46, 0xff, 0xd9,
+  ]);
+  const client = createTelegramBotClient({
+    botToken: "123456:test-token",
+    fetchImpl: async (_url, options = {}) => {
+      if (options.method === "POST") {
+        return new Response(JSON.stringify({
+          ok: true,
+          result: {
+            file_path: "photos/file_1.jpg",
+            file_size: image.length,
+          },
+        }), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        });
+      }
+      return new Response(image, {
+        status: 200,
+        headers: { "content-type": "application/octet-stream" },
+      });
+    },
+  });
+
+  const downloaded = await client.downloadFile("photo-file-id");
+
+  assert.deepEqual(downloaded, {
+    bytes: image,
+    contentType: "image/jpeg",
+  });
+});
+
 test("Telegram client sends a reply to the source message", async () => {
   const calls = [];
   const client = createTelegramBotClient({
@@ -81,6 +117,28 @@ test("Telegram client sends a reply to the source message", async () => {
     text: "Done, I've saved those sales.",
     reply_parameters: { message_id: 1503 },
   });
+  assert.ok(calls[0].options.signal instanceof AbortSignal);
+});
+
+test("Telegram client bounds stalled Bot API requests", async () => {
+  const client = createTelegramBotClient({
+    botToken: "123456:test-token",
+    timeoutMs: 5,
+    fetchImpl: async (_url, options) =>
+      new Promise((resolve, reject) => {
+        options.signal.addEventListener("abort", () => {
+          reject(options.signal.reason);
+        }, { once: true });
+      }),
+  });
+
+  await assert.rejects(
+    client.sendMessage({
+      chatId: 9001,
+      text: "Test",
+    }),
+    /timeout|abort/i,
+  );
 });
 
 test("Scribe adapter posts multipart audio with scribe_v2 and returns transcript metadata", async () => {

@@ -20,10 +20,14 @@ export async function POST(request: Request) {
     "google-sheets-export.request"
   );
   if (!parsed.ok) return parsed.response;
+  const body = parsed.body as GoogleSheetsExportRequest;
 
   return forwardGoogleSheetsRequest("/export", {
     method: "POST",
-    body: parsed.body as GoogleSheetsExportRequest,
+    body: {
+      ...body,
+      product_id: auth.merchant.productId
+    } satisfies GoogleSheetsExportRequest,
     expectedOperation: "export",
     idempotencyKey: request.headers.get("idempotency-key") ?? undefined
   });

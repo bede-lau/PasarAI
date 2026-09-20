@@ -1697,6 +1697,9 @@ export const schemas = {
     "type": "object",
     "additionalProperties": false,
     "properties": {
+      "product_id": {
+        "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+      },
       "dates": {
         "type": "array",
         "maxItems": 366,
@@ -1789,7 +1792,19 @@ export const schemas = {
     "$id": "google-sheets-reconcile.request",
     "x-typescript-name": "GoogleSheetsReconcileRequest",
     "type": "object",
-    "additionalProperties": false
+    "additionalProperties": false,
+    "properties": {
+      "product_id": {
+        "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+      },
+      "dates": {
+        "type": "array",
+        "maxItems": 366,
+        "items": {
+          "$ref": "../shared/primitives.schema.json#/$defs/Date"
+        }
+      }
+    }
   },
   "google-sheets-status.response": {
     "$schema": "https://json-schema.org/draft/2020-12/schema",

@@ -568,6 +568,7 @@ test("missing required pack size produces clarification and never becomes commit
     ...extraction.line_items[0],
     pack_size: null,
   };
+  const sentMessages = [];
   const ingestion = createTelegramIngestion({
     webhookSecret: "expected-secret",
     eventStore: createInMemoryIngestionStore({
@@ -578,6 +579,9 @@ test("missing required pack size produces clarification and never becomes commit
     telegramClient: {
       async downloadFile() {
         return { bytes: image, contentType: "image/jpeg" };
+      },
+      async sendMessage(message) {
+        sentMessages.push(message);
       },
     },
     receiptExtractor: {
@@ -597,6 +601,13 @@ test("missing required pack size produces clarification and never becomes commit
     response.body.clarifications[0].field,
     /line_items\[0\]\.pack_size/,
   );
+  assert.equal(response.body.reply_delivery, "sent");
+  assert.equal(sentMessages.length, 1);
+  assert.equal(
+    sentMessages[0].text,
+    response.body.clarifications[0].question,
+  );
+  assert.equal(sentMessages[0].replyToMessageId, 1205);
 });
 
 test("financial fields below 0.90 confidence require confirmation", async () => {
@@ -756,6 +767,102 @@ test("transient Telegram failure retries one raw event and terminal success dedu
   assert.equal(attempts, 2);
   assert.equal(eventStore.listEvents().length, 1);
   assert.equal(evidenceStore.listEvidence().length, 1);
+});
+
+test("failed confirmation reply retries delivery without replaying the mutation", async () => {
+  const eventStore = createInMemoryIngestionStore();
+  const evidenceStore = createInMemoryEvidenceStore();
+  let interpretationCount = 0;
+  let mutationCount = 0;
+  let confirmationReplyAttempts = 0;
+  const sentMessages = [];
+  const ingestion = createTelegramIngestion({
+    webhookSecret: "expected-secret",
+    eventStore,
+    evidenceStore,
+    merchantResolver: resolveMerchant,
+    telegramClient: {
+      async sendMessage(message) {
+        if (message.replyToMessageId === 1405) {
+          confirmationReplyAttempts += 1;
+          if (confirmationReplyAttempts === 1) {
+            throw new Error("Telegram temporarily unavailable");
+          }
+        }
+        sentMessages.push(message);
+      },
+    },
+    messageInterpreter: {
+      async interpret() {
+        interpretationCount += 1;
+        return {
+          endpoint_id: "sales.create",
+          payload: {
+            occurred_at: "2026-07-16T10:00:00+08:00",
+            source: "telegram_text",
+            reply_language: "en",
+            lines: [{
+              product_id: "p_nlb_001",
+              quantity: "5",
+              unit_price_rm: "5.00",
+            }],
+          },
+        };
+      },
+    },
+    service: {
+      async recordSale() {
+        mutationCount += 1;
+        return {
+          state: "committed",
+          event_id: "sale-delivery-retry",
+        };
+      },
+    },
+  });
+  const request = (updateId, text) => ({
+    headers: {
+      "x-telegram-bot-api-secret-token": "expected-secret",
+    },
+    body: {
+      update_id: updateId,
+      message: {
+        message_id: updateId + 1_000,
+        date: Math.floor(
+          Date.parse("2026-07-16T10:00:00+08:00") / 1_000,
+        ),
+        chat: { id: 9001 },
+        text,
+      },
+    },
+  });
+
+  const staged = await ingestion.handleWebhook(
+    request(404, "Record five Nasi Lemak Biasa at RM5 each."),
+  );
+  const failedDelivery = await ingestion.handleWebhook(
+    request(405, "confirm"),
+  );
+  const retriedDelivery = await ingestion.handleWebhook(
+    request(405, "confirm"),
+  );
+  const duplicate = await ingestion.handleWebhook(
+    request(405, "confirm"),
+  );
+
+  assert.equal(staged.body.state, "confirmation_required");
+  assert.equal(failedDelivery.status, 503);
+  assert.equal(failedDelivery.body.reply_delivery, "failed");
+  assert.equal(retriedDelivery.status, 202);
+  assert.equal(retriedDelivery.body.reply_delivery, "sent");
+  assert.equal(duplicate.body.state, "duplicate");
+  assert.equal(interpretationCount, 1);
+  assert.equal(mutationCount, 1);
+  assert.equal(confirmationReplyAttempts, 2);
+  assert.equal(sentMessages.length, 2);
+  assert.match(sentMessages[1].text, /^Saved for 16 Jul 2026:/);
+  assert.equal(eventStore.listEvents().length, 2);
+  assert.equal(evidenceStore.listEvidence().length, 2);
 });
 
 test("transient Telegram voice interpretation retries delivery before terminal success", async () => {

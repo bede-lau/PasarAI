@@ -47,6 +47,7 @@ export async function resetDemo({
     baseline_date: live.baselineDate ?? "2026-07-15",
     baseline_unit_cogs_rm: live.baselineUnitCogsRm ?? "2.50",
     current_unit_cogs_rm: live.currentUnitCogsRm ?? "3.22",
+    input_record_count: live.inputRecordCount ?? 10,
     note: live.reset
       ? "Local fixtures and Kak Lina's Lakebase demo snapshot were restored."
       : "Local fixtures were restored. Lakebase was not changed because the live reset was not requested or configured.",

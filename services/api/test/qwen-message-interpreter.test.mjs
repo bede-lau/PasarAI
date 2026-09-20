@@ -76,6 +76,7 @@ test("uses the local interpreter when DashScope is not configured", async () => 
     endpoint_id: "daily-summary.get",
     payload: {
       date: "2026-07-15",
+      requested_metric: "cogs",
       reply_language: "ms",
     },
   });
@@ -106,7 +107,7 @@ test("sends required allowlisted Qwen tools without merchant credentials or IDs"
 
   const operation = await interpreter.interpret({
     merchantId: "merchant-id-must-not-leave-runtime",
-    text: "How are my expenses looking today?",
+    text: "Pull the dashboard snapshot.",
     source: "telegram_voice",
     sourceLanguage: "en",
     occurredAt,
@@ -142,6 +143,7 @@ test("sends required allowlisted Qwen tools without merchant credentials or IDs"
       "simulate_price",
       "record_correction",
       "get_daily_summary",
+      "get_business_trend",
       "respond_to_merchant",
     ],
   );
@@ -153,6 +155,95 @@ test("sends required allowlisted Qwen tools without merchant credentials or IDs"
     /merchant-id-must-not-leave-runtime/,
   );
   assert.doesNotMatch(JSON.stringify(requestBody), /test-dashscope-key/);
+});
+
+test("deterministic retrieval bypasses Qwen for the latest revenue question", async () => {
+  let fetchCount = 0;
+  const interpreter = createMessageInterpreter({
+    environment: {
+      DASHSCOPE_API_KEY: "test-dashscope-key",
+      PASARAI_TIME_ZONE: "Asia/Kuala_Lumpur",
+    },
+    fetchImpl: async () => {
+      fetchCount += 1;
+      throw new Error("deterministic retrieval should not call Qwen");
+    },
+  });
+
+  assert.deepEqual(await interpreter.interpret({
+    text: "What is the revenue for today?",
+    source: "telegram_voice",
+    sourceLanguage: "eng",
+    occurredAt,
+  }), {
+    endpoint_id: "daily-summary.get",
+    payload: {
+      date: "2026-07-15",
+      requested_metric: "revenue",
+      reply_language: "en",
+    },
+  });
+  assert.equal(fetchCount, 0);
+});
+
+test("clear Telegram text mutations use the deterministic fast path", async () => {
+  let fetchCount = 0;
+  const interpreter = createMessageInterpreter({
+    environment: {
+      DASHSCOPE_API_KEY: "test-dashscope-key",
+      PASARAI_TIME_ZONE: "Asia/Kuala_Lumpur",
+    },
+    fetchImpl: async () => {
+      fetchCount += 1;
+      throw new Error("clear text should not call Qwen");
+    },
+  });
+
+  const cases = [
+    {
+      text: "Today I sold 40 nasi lemak biasa at RM5 each.",
+      endpointId: "sales.create",
+    },
+    {
+      text: "Packaging naik RM2.",
+      endpointId: "cost-changes.create",
+    },
+    {
+      text:
+        "Bought 2 trays telur at RM12 per tray of 30 from Sinar Borong.",
+      endpointId: "purchase-intake.upsert",
+    },
+  ];
+
+  for (const scenario of cases) {
+    const result = await interpreter.interpret({
+      text: scenario.text,
+      source: "telegram_text",
+      sourceLanguage: null,
+      occurredAt,
+    });
+    assert.equal(result.endpoint_id, scenario.endpointId);
+  }
+  assert.equal(fetchCount, 0);
+});
+
+test("a what-if question never falls back to a sale when Qwen is unavailable", async () => {
+  const interpreter = createMessageInterpreter({
+    environment: {
+      DASHSCOPE_API_KEY: "test-dashscope-key",
+      PASARAI_TIME_ZONE: "Asia/Kuala_Lumpur",
+    },
+    fetchImpl: async () => {
+      throw new Error("Qwen unavailable");
+    },
+  });
+
+  assert.equal(await interpreter.interpret({
+    text: "What if I sell 35 nasi lemak biasa at RM5.50?",
+    source: "telegram_text",
+    sourceLanguage: "en",
+    occurredAt,
+  }), null);
 });
 
 test("trusted Scribe English overrides contradictory Qwen language fields", async () => {
@@ -405,18 +496,12 @@ test("rejects tool arguments that do not match the local schema", async () => {
     },
   }]);
 
-  assert.deepEqual(await interpreter.interpret({
-    text: "How are my expenses looking today?",
+  assert.equal(await interpreter.interpret({
+    text: "Pull the dashboard snapshot.",
     source: "telegram_voice",
     sourceLanguage: "en",
     occurredAt,
-  }), {
-    endpoint_id: "daily-summary.get",
-    payload: {
-      date: "2026-07-15",
-      reply_language: "en",
-    },
-  });
+  }), null);
 });
 
 test("drops a descriptive clarification source from a complete cost change", async () => {
@@ -493,7 +578,7 @@ test("uses qwen-plus when the selected Qwen snapshot is unavailable", async () =
 
   assert.equal(
     (await interpreter.interpret({
-      text: "How are my expenses looking now?",
+      text: "Pull the dashboard snapshot.",
       source: "telegram_voice",
       sourceLanguage: "en",
       occurredAt,

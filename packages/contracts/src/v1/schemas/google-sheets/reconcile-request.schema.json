@@ -3,5 +3,17 @@
   "$id": "google-sheets-reconcile.request",
   "x-typescript-name": "GoogleSheetsReconcileRequest",
   "type": "object",
-  "additionalProperties": false
+  "additionalProperties": false,
+  "properties": {
+    "product_id": {
+      "$ref": "../shared/primitives.schema.json#/$defs/Identifier"
+    },
+    "dates": {
+      "type": "array",
+      "maxItems": 366,
+      "items": {
+        "$ref": "../shared/primitives.schema.json#/$defs/Date"
+      }
+    }
+  }
 }

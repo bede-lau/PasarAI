@@ -24,6 +24,7 @@ const configuredScanRoots = process.argv.includes("--scan-root")
 const sourceExtensions = new Set([".js", ".mjs", ".ts", ".py", ".sql", ".json", ".md", ".yml", ".yaml"]);
 const excludedDirectoryNames = new Set([
   ".next",
+  ".omc",
   "__pycache__",
   "coverage",
   "dist",
