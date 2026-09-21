@@ -105,6 +105,57 @@ The text-agent path now:
 - bounds Telegram Bot API requests at 10 seconds and uses a 90-second
   processing lease.
 
+## Correction working memory
+
+Previously, the `record_correction` operation required the merchant to provide
+a literal `target_event_id`, which meant natural corrections like "correct
+that last sale" could not be resolved and were discarded.
+
+PasarAI now resolves addressable sales itself. The
+`service.getRecentSaleEvents({ merchantId, limit })` method returns the
+merchant's three most recent sale events, newest first, with corrections
+already applied. Each event carries `event_id`, `date`, and `lines` containing
+`line_index`, `product_id`, `quantity`, and `unit_price_rm`. The query is
+backed by a bounded `listRecentEvents` implementation on both the in-memory
+and Lakebase stores, with fallback to `listEvents` for stores that do not
+implement it.
+
+The event list is injected into the system prompt as "Recent sales available
+for correction, newest first". The model may only copy an `event_id` from that
+list; it is instructed never to invent, shorten, or reformat one. The list
+acts as an allowlist: a proposed `target_event_id` is accepted only if it
+appears in the injected list or verbatim in the merchant's message. Any other
+target is discarded with reason `unknown_correction_target`.
+
+Corrected numeric values must match numbers the merchant actually stated. When
+the message contains digits, the value must match one of them; when spelled
+out in English, Malay, or Chinese, the value is accepted and shown in the
+confirmation gate. Otherwise, the correction is discarded with reason
+`correction_value_unstated`.
+
+Corrected product IDs must be named in the message and matched against the
+catalog using the same alias logic as sales; otherwise the correction is
+discarded with reason `unnamed_product`.
+
+Discarded corrections do not fall through to generic "I did not catch that"
+replies. Instead, PasarAI answers in the merchant's language with the single
+missing detail: which sale to correct, or what exact number was meant. PasarAI
+never guesses either one.
+
+Corrections remain database mutations and pass through the merchant
+confirmation gate before any write occurs.
+
+
+A message that opens with a correction verb in English, Malay, or Chinese is
+never answered with a read-only lookup operation such as `get_daily_summary`
+or `get_business_trend`. When the model answers such a message with only a
+retrieval operation, PasarAI discards it with reason
+`correction_answered_with_retrieval` and asks which sale to correct instead.
+This guard exists because the model may read "Correct the sale from last
+Tuesday" as a general question about last Tuesday, and prompt instructions
+alone did not prevent it from answering with a summary lookup instead of a
+correction.
+
 ## Grounding guarantees
 
 Neither interpretation path may invent a financial value. The deterministic
@@ -114,6 +165,17 @@ sale line with a positive quantity at or below 100,000 units and a positive
 unit price at or below RM10,000. The orchestration layer answers a message that
 still contains an unreadable number, or a date that does not exist on the
 calendar, with one merchant-language question instead of a preview.
+
+For typed Telegram messages, every numeric value in a proposed sale
+(`quantity` and `unit_price_rm`) and in a proposed cost change (`increase_rm`)
+must be one the merchant actually stated in the message, matched by the same
+logic as corrected values. When a message contains digits, the value must
+match one of them; when spelled out in English, Malay, or Chinese, it is
+accepted and shown in the confirmation gate. Voice transcripts are exempt from
+this requirement because they are lossy; the merchant confirmation gate guards
+those numbers instead. A typed message with an unstated numeric value is
+discarded with reason `unstated_sale_numbers` or `unstated_cost_change_amount`
+accordingly.
 
 Model output passes the same discipline before it reaches the confirmation
 gate: a sale must carry plausible numbers, a text message must actually name
@@ -125,8 +187,11 @@ Every discard is reported rather than swallowed. The model interpreter emits a
 tagged reason for each rejection - `request_failed`, `http_error`,
 `invalid_response_body`, `unknown_tool`, `invalid_tool_arguments`,
 `schema_invalid`, `unsupported_operation`, `unsafe_selection`,
-`implausible_sale_numbers`, `unnamed_product`, `non_positive_cost_change`, and
-a final `no_verified_operation` naming the fallback that was used. Diagnostics
-never block interpretation, and a message that still cannot be interpreted is
+`implausible_sale_numbers`, `unnamed_product`, `non_positive_cost_change`,
+`unknown_correction_target`, `correction_value_unstated`,
+`unstated_sale_numbers`, `unstated_cost_change_amount`,
+`correction_answered_with_retrieval`, and a final
+`no_verified_operation` naming the fallback that was used. Diagnostics never
+block interpretation, and a message that still cannot be interpreted is
 answered in the merchant's own language with one concrete next step rather than
 a generic failure line.

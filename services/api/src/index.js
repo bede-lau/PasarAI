@@ -1326,7 +1326,7 @@ const UNREADABLE_AMOUNT_PATTERNS = [
   /\d,\d{3}(?!\d)/u,
 ];
 
-function unreadableAmountInText(text) {
+export function unreadableAmountInText(text) {
   return UNREADABLE_AMOUNT_PATTERNS.some((pattern) => pattern.test(text));
 }
 
@@ -1363,6 +1363,41 @@ function uninterpretedReply(language) {
       + "价格，或者问我今天的"
       + "营业额、成本或毛利。",
   };
+  return replies[language] ?? replies.en;
+}
+
+// PasarAI discards a correction it cannot ground. Rather than guess the sale
+// or the number, it asks for the one detail that was missing.
+const CLARIFICATION_REPLIES = {
+  unknown_correction_target: {
+    en:
+      "I am not sure which sale to fix. Tell me the product and the day you "
+      + "sold it, and I will pull that sale up.",
+    ms:
+      "Saya tak pasti jualan mana nak dibetulkan. Beritahu produk dan hari "
+      + "anda jual, saya akan carikan jualan itu.",
+    zh:
+      "我不确定要更正哪一笔销售。"
+      + "请告诉我商品和销售的日期，"
+      + "我就把那笔销售找出来。",
+  },
+  correction_value_unstated: {
+    en:
+      "Tell me the exact corrected number, for example 30 packs or RM5.50, "
+      + "and I will fix that sale.",
+    ms:
+      "Beritahu saya angka betul yang tepat, contohnya 30 bungkus atau "
+      + "RM5.50, dan saya betulkan jualan itu.",
+    zh:
+      "请告诉我确切的更正数字，"
+      + "例如 30 包或 RM5.50，"
+      + "我就会更正那笔销售。",
+  },
+};
+
+function clarificationReply(clarification, language) {
+  const replies = CLARIFICATION_REPLIES[clarification];
+  if (!replies) return null;
   return replies[language] ?? replies.en;
 }
 
@@ -1703,7 +1738,11 @@ export function createTelegramIngestion({
           endpoint_id: operation.endpoint_id,
           read_only: true,
           reply_language: replyLanguage,
-          text: operationPayload.text,
+          text: operationPayload.text
+            ?? clarificationReply(
+              operationPayload.clarification,
+              replyLanguage,
+            ),
         };
       } else if (operation.endpoint_id === "daily-summary.get") {
         const productId = operationPayload.product_id;
@@ -2106,6 +2145,12 @@ export function createTelegramIngestion({
           }))
         : undefined;
 
+    const recentSales =
+      "getRecentSaleEvents" in service
+      && typeof service.getRecentSaleEvents === "function"
+        ? (await service.getRecentSaleEvents({ merchantId })).events
+        : undefined;
+
     let interpreted;
     try {
       interpreted = await messageInterpreter.interpret({
@@ -2117,6 +2162,7 @@ export function createTelegramIngestion({
         occurredAt,
         purchaseIntake,
         componentCatalog,
+        recentSales,
       });
     } catch {
       return {

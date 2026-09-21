@@ -142,6 +142,7 @@ export function buildSystemPrompt({
   source,
   sourceLanguage,
   purchaseIntake,
+  recentSales,
 }) {
   const currentDate = dateInTimeZone(occurredAt, timeZone) ?? "unknown";
   return [
@@ -163,7 +164,11 @@ export function buildSystemPrompt({
     "Use record_cost_change for a relative component cost increase. Omit pack_size when the denominator is unknown so the business service can request it.",
     "For record_cost_change, clarification_source is an opaque PasarAI identifier. Include it only when an exact identifier was provided; never describe the clarification in that field.",
     "Use simulate_price for every what-if price or quantity question.",
-    "Use record_correction only when the transcript includes the target event ID and the exact corrected value.",
+    "Use record_correction when the merchant fixes a sale that is listed under recent sales below, or when the transcript includes the target event ID. Copy target_event_id character for character from that list or from the transcript; never invent, shorten, or reformat an event ID.",
+    "A correction also needs the exact corrected value the merchant stated, and line_index copied from the listed sale when it has more than one line.",
+    "When the merchant refers to a sale that is not listed, when more than one listed sale fits the description, or when the corrected value is not stated, call respond_to_merchant and ask for the one missing detail. Never guess which sale or what the new value is.",
+    "A request to fix, correct, or change a past sale is never answered with get_daily_summary or get_business_trend. Either correct the sale or ask which sale to correct.",
+    "When recent sales are listed as none and the merchant asks to fix a past sale, call respond_to_merchant, say you cannot find that sale, and ask the merchant to tell you what was sold and when.",
     "respond_to_merchant must not contain merchant-specific financial results, calculations, or claims. It is only for greetings, scope, or clarification.",
     `Merchant-local date: ${currentDate}`,
     `Merchant time zone: ${timeZone}`,
@@ -180,6 +185,9 @@ export function buildSystemPrompt({
           item: purchaseIntake.request?.item ?? {},
         })
       : "none"}`,
+    `Recent sales available for correction, newest first: ${
+      recentSales?.length ? JSON.stringify(recentSales) : "none"
+    }`,
     catalogPrompt("Allowed products", products),
     catalogPrompt("Allowed recipe components", components),
   ].join("\n\n");

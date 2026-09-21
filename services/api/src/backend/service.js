@@ -1887,6 +1887,41 @@ export function createPasarAiService({
       return activePurchaseIntake(merchantId, conversationKey);
     },
 
+    // The interpretation layer cannot address a sale the merchant did not name
+    // by ID, so PasarAI resolves the last few sales itself and offers them as
+    // the only correction targets the model is allowed to choose from.
+    async getRecentSaleEvents({ merchantId, limit = 3 } = {}) {
+      if (!merchantId) return { events: [] };
+      const sales = typeof store.listRecentEvents === "function"
+        ? await store.listRecentEvents({ merchantId, type: "sale", limit })
+        : (await store.listEvents({ merchantId, type: "sale" }))
+            .slice(-limit)
+            .reverse();
+      if (!sales.length) return { events: [] };
+      const corrections = await store.listEvents({
+        merchantId,
+        type: "correction",
+      });
+      const events = [];
+      for (const sale of sales) {
+        const payload = await effectiveSalePayload(sale, corrections);
+        events.push({
+          event_id: sale.eventId,
+          date: await store.getMerchantCalendarDate(
+            merchantId,
+            sale.occurredAt,
+          ),
+          lines: (payload.lines ?? []).map((line, index) => ({
+            line_index: index,
+            product_id: line.product_id,
+            quantity: line.quantity,
+            unit_price_rm: line.unit_price_rm,
+          })),
+        });
+      }
+      return { events };
+    },
+
     async upsertPurchaseIntake(
       request,
       {

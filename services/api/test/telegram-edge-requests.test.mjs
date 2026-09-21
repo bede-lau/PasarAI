@@ -33,6 +33,7 @@ function createEdgeHarness() {
       return async () => {
         if (name === "getComponentCatalog") return { components: [] };
         if (name === "getActivePurchaseIntake") return null;
+        if (name === "getRecentSaleEvents") return { events: [] };
         mutations.push(name);
         throw new Error(`unexpected business call: ${name}`);
       };
@@ -283,6 +284,25 @@ test("every discarded model proposal reports why it was discarded", async () => 
       text: "Sold nasi lemak biasa today.",
       toolCalls: saleToolCall("p_nlb_001", "5", "50000.00"),
       reason: "implausible_sale_numbers",
+    },
+    {
+      text: "Sold nasi lemak biasa today.",
+      toolCalls: saleToolCall("p_nlb_001", "40", "5.50"),
+      reason: "unstated_sale_numbers",
+    },
+    {
+      text: "Packaging increased.",
+      toolCalls: [{
+        function: {
+          name: "record_cost_change",
+          arguments: JSON.stringify({
+            component_id: "c_packaging",
+            increase_rm: "1.20",
+            reply_language: "en",
+          }),
+        },
+      }],
+      reason: "unstated_cost_change_amount",
     },
     {
       text: "Nasi lemak biasa update.",

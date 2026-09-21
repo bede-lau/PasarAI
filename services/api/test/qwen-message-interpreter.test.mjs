@@ -427,7 +427,10 @@ test("maps complete costs, simulations, and corrections without calculating", as
   ]);
 
   const operations = await interpreter.interpret({
-    text: "Structured test transcript.",
+    text:
+      "Sinar Borong eggs, 3 trays of 30, RM49.50. "
+      + "What if I sell 35 at RM5.50? "
+      + "Also fix sale-001, quantity should be 38 not 40.",
     source: "telegram_text",
     sourceLanguage: "en",
     occurredAt,

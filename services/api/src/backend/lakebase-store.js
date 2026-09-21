@@ -394,6 +394,32 @@ export class LakebaseLedgerStore {
     return result.rows.map(rowEvent);
   }
 
+  async listRecentEvents({ merchantId, type, limit = 3 } = {}) {
+    if (!Number.isInteger(limit) || limit < 1) return [];
+    const conditions = [];
+    const values = [];
+    const add = (sql, value) => {
+      values.push(value);
+      conditions.push(sql.replace("?", `$${values.length}`));
+    };
+    if (merchantId) add("events.merchant_id = ?", merchantId);
+    if (type) add("events.event_type = ?", type);
+    values.push(limit);
+    const result = await this.#query(
+      `
+        SELECT events.*
+        FROM raw_events AS events
+        ${conditions.length ? `WHERE ${conditions.join(" AND ")}` : ""}
+        ORDER BY events.occurred_at DESC,
+                 events.ingested_at DESC,
+                 events.event_id DESC
+        LIMIT $${values.length}
+      `,
+      values,
+    );
+    return result.rows.map(rowEvent);
+  }
+
   async saveAnalyticsOverview(overview) {
     try {
       return await this.#transaction(async () => {

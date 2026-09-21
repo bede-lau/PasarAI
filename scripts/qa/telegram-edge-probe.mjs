@@ -2,12 +2,33 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { performance } from "node:perf_hooks";
 
+import { unreadableAmountInText } from "../../services/api/src/index.js";
 import { createMessageInterpreter } from "../../services/api/src/providers/qwen-message-interpreter.js";
 
 const occurredAt = process.env.PASARAI_QA_OCCURRED_AT
   ?? "2026-07-16T04:00:00.000Z";
 const merchantId = process.env.PASARAI_MERCHANT_ID ?? "m_kak_lina_001";
 const productId = process.env.PASARAI_PRODUCT_ID ?? "p_nlb_001";
+
+const recentSaleId = process.env.PASARAI_QA_RECENT_SALE_ID
+  ?? "evt_sale_001";
+
+// The probe stands in for what the service computes from the ledger, so the
+// model is offered exactly one addressable sale to correct.
+const recentSales = [
+  {
+    event_id: recentSaleId,
+    date: occurredAt.slice(0, 10),
+    lines: [
+      {
+        line_index: 0,
+        product_id: productId,
+        quantity: "40",
+        unit_price_rm: "5.00",
+      },
+    ],
+  },
+];
 
 const cases = [
   {
@@ -79,14 +100,63 @@ const cases = [
   {
     id: "ADV-09",
     text: "Sold five mystery meals at RM5.",
-    expect: { endpoint: null },
+    expect: { noMutation: true },
   },
   {
     id: "ADV-10",
     text: "Packaging increased.",
     expect: { endpoint: null },
   },
+  {
+    id: "FIX-01",
+    text: "Correct that last sale, it was 30 packs not 40.",
+    recentSales,
+    expect: {
+      endpoint: "corrections.create",
+      payload: { target_event_id: recentSaleId },
+    },
+  },
+  {
+    id: "FIX-02",
+    text: "Betulkan jualan tadi, sebenarnya 30 bungkus bukan 40.",
+    recentSales,
+    expect: {
+      endpoint: "corrections.create",
+      language: "ms",
+      payload: { target_event_id: recentSaleId },
+    },
+  },
+  {
+    id: "FIX-03",
+    text: "上一笔销售应该是 30 "
+      + "包，不是 40 包。",
+    recentSales,
+    expect: {
+      endpoint: "corrections.create",
+      language: "zh",
+      payload: { target_event_id: recentSaleId },
+    },
+  },
+  {
+    id: "FIX-04",
+    text: "Please fix my last sale.",
+    recentSales,
+    expect: { asksForDetail: true },
+  },
+  {
+    id: "FIX-05",
+    text: "Correct the sale from last Tuesday to 30 packs.",
+    expect: { asksForDetail: true },
+  },
 ];
+
+const MUTATION_ENDPOINTS = new Set([
+  "sales.create",
+  "costs.create",
+  "cost-changes.create",
+  "corrections.create",
+  "purchase-intake.upsert",
+]);
 
 function operations(result) {
   if (Array.isArray(result)) return result.filter(Boolean);
@@ -99,6 +169,42 @@ function replyText(operation) {
 
 function failures(expect, ops) {
   const problems = [];
+  if (expect.noMutation) {
+    const mutation = ops.find(({ endpoint_id: endpointId }) =>
+      MUTATION_ENDPOINTS.has(endpointId)
+    );
+    if (mutation) {
+      problems.push(`expected no write, received ${mutation.endpoint_id}`);
+    }
+    return problems;
+  }
+  // An ungrounded correction must end in a question, never in a write. The
+  // question may be the model's own or PasarAI's deterministic clarification.
+  if (expect.asksForDetail) {
+    const mutation = ops.find(({ endpoint_id: endpointId }) =>
+      MUTATION_ENDPOINTS.has(endpointId)
+    );
+    if (mutation) {
+      problems.push(`expected a question, received ${mutation.endpoint_id}`);
+      return problems;
+    }
+    const operation = ops[0];
+    if (!operation) {
+      problems.push("expected a question, received no operation");
+      return problems;
+    }
+    if (operation.endpoint_id !== "agent.reply") {
+      problems.push(
+        `expected a question, received ${operation.endpoint_id}`,
+      );
+      return problems;
+    }
+    const clarification = operation.payload?.clarification;
+    if (!clarification && !/[?？]/u.test(replyText(operation))) {
+      problems.push("reply did not ask the merchant for the missing detail");
+    }
+    return problems;
+  }
   if (expect.endpoint === null) {
     if (ops.length) {
       problems.push(`expected no operation, received ${ops[0].endpoint_id}`);
@@ -164,6 +270,22 @@ async function main() {
     const startedAt = performance.now();
     let ops = [];
     let error = null;
+    if (unreadableAmountInText(testCase.text)) {
+      // PasarAI asks for plain digits before it ever reaches the model.
+      results.push({
+        id: testCase.id,
+        text: testCase.text,
+        duration_ms: 0,
+        endpoint_id: null,
+        guard: "unreadable_amount",
+        status: testCase.expect.endpoint === null ? "pass" : "fail",
+        problems: testCase.expect.endpoint === null
+          ? []
+          : [`expected ${testCase.expect.endpoint}, guarded before the model`],
+      });
+      if (testCase.expect.endpoint !== null) failed += 1;
+      continue;
+    }
     try {
       ops = operations(await interpreter.interpret({
         merchantId,
@@ -171,6 +293,7 @@ async function main() {
         source: "telegram_text",
         sourceLanguage: null,
         occurredAt,
+        recentSales: testCase.recentSales ?? [],
       }));
     } catch (caught) {
       error = caught.message;
@@ -188,6 +311,7 @@ async function main() {
       reply: ops[0]?.endpoint_id === "agent.reply"
         ? replyText(ops[0])
         : undefined,
+      clarification: ops[0]?.payload?.clarification,
       status: problems.length ? "fail" : "pass",
       problems,
     });

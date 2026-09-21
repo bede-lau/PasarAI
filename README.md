@@ -13,6 +13,8 @@ them.
 ## Core Capabilities
 
 - Capture sales, purchases, and corrections through Telegram text or voice.
+- Correct a recent sale by referring to it in plain language, without quoting
+  an event ID.
 - Extract receipt details while retaining the original evidence for review.
 - Require explicit confirmation before financial data is committed.
 - Track component costs, per-pack cost, revenue, gross profit, and margin.

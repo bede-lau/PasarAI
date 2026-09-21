@@ -1,5 +1,6 @@
 import {
   createMessageInterpreter as createLocalMessageInterpreter,
+  detectReplyLanguage,
   loadMessageInterpreterCatalog,
 } from "./local-message-interpreter.js";
 import {
@@ -105,20 +106,84 @@ function plausibleSaleLines(lines) {
     });
 }
 
+const CJK_CHARACTER = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}]/u;
+
+function aliasExpression(alias) {
+  const words = alias.trim().split(/\s+/).filter(Boolean).map(escapeRegex);
+  if (!words.length) return null;
+  // Latin aliases need word boundaries so "egg" does not match "eggplant".
+  // Chinese aliases have no word boundaries to anchor to, so they match on
+  // containment instead.
+  return CJK_CHARACTER.test(alias)
+    ? new RegExp(words.join("\\s*"), "iu")
+    : new RegExp(`\\b${words.join("\\s+")}\\b`, "iu");
+}
+
 function namesCatalogEntry(text, entries, entryId) {
-  const entry = entries.find(({ id }) => id === entryId);
+  const entry = (entries ?? []).find(({ id }) => id === entryId);
   if (!entry) return false;
   return [entry.name, ...(entry.aliases ?? [])]
     .filter(Boolean)
-    .some((alias) =>
-      new RegExp(
-        `\b${alias.trim().split(/\s+/).map(escapeRegex).join("\s+")}\b`,
-        "iu",
-      ).test(text)
-    );
+    .some((alias) => aliasExpression(alias)?.test(text) ?? false);
 }
 
-function groundingRejection(selected, { text, source, products }) {
+const SPELLED_NUMBER =
+  /\b(?:one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|dozen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred|satu|dua|tiga|empat|lima|enam|tujuh|lapan|sembilan|sepuluh|belas|puluh|ratus)\b|[一二三四五六七八九十百]/iu;
+
+function statedNumbers(text) {
+  return [...text.matchAll(/\d+(?:\.\d+)?/gu)]
+    .map((match) => Number.parseFloat(match[0]))
+    .filter(Number.isFinite);
+}
+
+// A proposal may only carry a number the merchant actually stated. When the
+// message spells the number out we cannot match it digit for digit, so we
+// accept it and let the confirmation gate show the merchant what we heard.
+function valueStatedInText(proposedValue, text) {
+  const value = Number.parseFloat(proposedValue);
+  if (!Number.isFinite(value)) return false;
+  const numbers = statedNumbers(text);
+  if (numbers.length) return numbers.includes(value);
+  return SPELLED_NUMBER.test(text);
+}
+
+function groundedCorrectionTarget(eventId, { text, recentSales }) {
+  if (typeof eventId !== "string" || !eventId) return false;
+  if (text.includes(eventId)) return true;
+  return (recentSales ?? []).some((sale) => sale.event_id === eventId);
+}
+
+function correctionRejection(payload, { text, recentSales, products }) {
+  if (!groundedCorrectionTarget(payload?.target_event_id, {
+    text,
+    recentSales,
+  })) {
+    return "unknown_correction_target";
+  }
+  const changes = payload?.replacement_payload?.changes ?? [];
+  if (!changes.length) return "correction_value_unstated";
+  for (const change of changes) {
+    if (change.kind === "identifier") {
+      if (!namesCatalogEntry(text, products, change.corrected_value)) {
+        return "unnamed_product";
+      }
+      continue;
+    }
+    if (change.kind === "money" || change.kind === "decimal") {
+      if (!valueStatedInText(change.corrected_value, text)) {
+        return "correction_value_unstated";
+      }
+    }
+  }
+  return null;
+}
+
+function groundingRejection(selected, {
+  text,
+  source,
+  products,
+  recentSales,
+}) {
   const operations = Array.isArray(selected) ? selected : [selected];
   for (const operation of operations) {
     if (operation?.endpoint_id === "sales.create") {
@@ -132,15 +197,79 @@ function groundingRejection(selected, { text, source, products }) {
       ) {
         return "unnamed_product";
       }
+      // A typed message says exactly what the merchant meant, so every
+      // number in the proposal has to come from it. A voice transcript is
+      // lossy, and the confirmation gate is what guards those numbers.
+      if (
+        source === "telegram_text"
+        && !lines.every((line) =>
+          valueStatedInText(line.quantity, text)
+          && valueStatedInText(line.unit_price_rm, text)
+        )
+      ) {
+        return "unstated_sale_numbers";
+      }
     }
     if (operation?.endpoint_id === "cost-changes.create") {
       const increase = Number.parseFloat(operation.payload?.increase_rm);
       if (!Number.isFinite(increase) || increase <= 0) {
         return "non_positive_cost_change";
       }
+      if (
+        source === "telegram_text"
+        && !valueStatedInText(operation.payload?.increase_rm, text)
+      ) {
+        return "unstated_cost_change_amount";
+      }
+    }
+    if (operation?.endpoint_id === "corrections.create") {
+      const rejection = correctionRejection(operation.payload, {
+        text,
+        recentSales,
+        products,
+      });
+      if (rejection) return rejection;
     }
   }
   return null;
+}
+
+// A discarded correction is the one rejection the merchant can act on, so it
+// answers with a question instead of the generic "I did not catch that".
+const CORRECTION_CLARIFICATIONS = new Set([
+  "unknown_correction_target",
+  "correction_value_unstated",
+]);
+
+// "Correct the sale from last Tuesday" reads to the model like a question
+// about last Tuesday, and it answers with a summary the merchant did not ask
+// for. An instruction that opens with a correction verb is never answered
+// with a read-only lookup.
+const CORRECTION_IMPERATIVE =
+  /^\s*(?:(?:please|pls|tolong|sila)\s+)?(?:(?:correct|fix|amend|edit|betulkan|pinda|ubah|tukar)\b|请?\s*(?:更正|改正|纠正|修改))/iu;
+
+function onlyReadOnlyRetrieval(selected) {
+  const operations = Array.isArray(selected) ? selected : [selected];
+  return operations.length > 0
+    && operations.every(({ endpoint_id: endpointId }) =>
+      endpointId === "daily-summary.get"
+      || endpointId === "business-trend.get"
+    );
+}
+
+function clarificationOperation(rejection, selected, input) {
+  const operations = Array.isArray(selected) ? selected : [selected];
+  const stated = operations
+    .map((operation) => operation?.payload?.reply_language)
+    .find(Boolean);
+  return {
+    endpoint_id: "agent.reply",
+    payload: {
+      clarification: rejection,
+      reply_language:
+        stated ?? detectReplyLanguage(input.text, input.sourceLanguage),
+    },
+  };
 }
 
 function isDeterministicRetrieval(operation) {
@@ -243,13 +372,30 @@ export function createMessageInterpreter({
           // Diagnostics must never block interpretation.
         }
       };
+      // A correction instruction answered with a lookup is a miss, whichever
+      // layer produced it, so the check wraps every exit from interpret.
+      const grounded = (operations) => {
+        if (
+          !operations
+          || !CORRECTION_IMPERATIVE.test(input.text)
+          || !onlyReadOnlyRetrieval(operations)
+        ) {
+          return operations;
+        }
+        reject("correction_answered_with_retrieval");
+        return clarificationOperation(
+          "unknown_correction_target",
+          operations,
+          input,
+        );
+      };
       const localResult = await local.interpret(input);
       if (
         isDeterministicRetrieval(localResult)
         || isHighConfidenceTextFastPath(localResult, input.source)
         || !apiKey
       ) {
-        return localResult;
+        return grounded(localResult);
       }
 
       const occurredAt = input.occurredAt ?? now();
@@ -293,6 +439,7 @@ export function createMessageInterpreter({
                     source: input.source,
                     sourceLanguage: input.sourceLanguage,
                     purchaseIntake: input.purchaseIntake,
+                    recentSales: input.recentSales,
                   }),
                 },
                 {
@@ -346,15 +493,19 @@ export function createMessageInterpreter({
           text: input.text,
           source: input.source,
           products: activeCatalog.products,
+          recentSales: input.recentSales,
         });
-        if (!rejection) return selected;
+        if (!rejection) return grounded(selected);
         reject(rejection, { model });
+        if (CORRECTION_CLARIFICATIONS.has(rejection)) {
+          return clarificationOperation(rejection, selected, input);
+        }
       }
 
       reject("no_verified_operation", {
         fallback: localResult ? "deterministic" : "none",
       });
-      return localResult;
+      return grounded(localResult);
     },
   };
 }

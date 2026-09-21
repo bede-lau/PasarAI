@@ -233,6 +233,22 @@ export class InMemoryLedgerStore {
       .map(clone);
   }
 
+  listRecentEvents({ merchantId, type, limit = 3 } = {}) {
+    if (!Number.isInteger(limit) || limit < 1) return [];
+    return this.#events
+      .map((event, index) => ({ event, index }))
+      .filter(({ event }) => !merchantId || event.merchantId === merchantId)
+      .filter(({ event }) => !type || event.type === type)
+      .sort((left, right) =>
+        left.event.occurredAt === right.event.occurredAt
+          ? left.index - right.index
+          : (left.event.occurredAt < right.event.occurredAt ? -1 : 1)
+      )
+      .slice(-limit)
+      .reverse()
+      .map(({ event }) => clone(event));
+  }
+
   getMerchantCalendarDate(merchantId, occurredAt) {
     return calendarDate(
       occurredAt,
