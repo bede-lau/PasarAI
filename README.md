@@ -7,17 +7,7 @@
   <sub>English, Bahasa Melayu, Simplified Chinese, and Manglish. Evidence is stored first. The merchant confirms. <code>decimal.js</code> writes MYR. The model never does the arithmetic.</sub>
 </p>
 
-<p align="center">
-  <img alt="Next.js 16.2.10" src="https://img.shields.io/badge/Next.js-16.2.10-111111?style=flat-square&logo=nextdotjs&logoColor=19c37d">
-  <img alt="React 19.2.7" src="https://img.shields.io/badge/React-19.2.7-111111?style=flat-square&logo=react&logoColor=19c37d">
-  <img alt="Node.js 22 to 24" src="https://img.shields.io/badge/Node.js-22%20%7C%2023%20%7C%2024-111111?style=flat-square&logo=nodedotjs&logoColor=19c37d">
-  <img alt="pnpm 10.29.3" src="https://img.shields.io/badge/pnpm-10.29.3-111111?style=flat-square&logo=pnpm&logoColor=19c37d">
-  <img alt="Lakebase on Postgres" src="https://img.shields.io/badge/Lakebase-Postgres-111111?style=flat-square&logo=postgresql&logoColor=19c37d">
-  <img alt="Databricks Lakeflow" src="https://img.shields.io/badge/Databricks-Lakeflow-111111?style=flat-square&logo=databricks&logoColor=19c37d">
-  <img alt="Telegram Bot API" src="https://img.shields.io/badge/Telegram-Bot%20API-111111?style=flat-square&logo=telegram&logoColor=19c37d">
-  <img alt="ElevenLabs Scribe v2" src="https://img.shields.io/badge/ElevenLabs-Scribe%20v2-111111?style=flat-square">
-  <img alt="Qwen via DashScope" src="https://img.shields.io/badge/Qwen-DashScope-111111?style=flat-square">
-</p>
+<p align="center"><sub>Next.js · React · Node.js · pnpm · Lakebase · Databricks · Telegram · ElevenLabs · Qwen</sub></p>
 
 ---
 
