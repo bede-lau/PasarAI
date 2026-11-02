@@ -1,5 +1,5 @@
 <p align="center">
-  <strong>🏆 Overall Champion (1st place) · Codex Community Hackathon KL 2026</strong>
+  <strong>🏆 1st place · KL Codex Community Hackathon</strong>
 </p>
 
 <p align="center">
