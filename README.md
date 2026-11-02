@@ -292,5 +292,5 @@ We'd rather be precise than impressive.
 No product licence file is committed in this repository. `skills/` carries its own notices and is not part of the runtime.
 
 <p align="center">
-  <sub>Overall Champion, Codex Community Hackathon KL 2026. Codex assisted the build and is not on the request path.</sub>
+  <sub>Built for the KL Codex Community Hackathon. Codex assisted the build and is not on the request path.</sub>
 </p>
