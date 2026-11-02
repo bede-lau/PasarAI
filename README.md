@@ -1,4 +1,34 @@
-# PasarAI
+<h1 align="center">PasarAI</h1>
+<p align="center">🏆 <b>1st place · KL Codex Community Hackathon</b><br/><sub>Solo build · <a href="https://my.linkedin.com/in/yu-hang-chok-5ab0b4298">Award announcement</a></sub></p>
+<p align="center"><b>From a voice note or receipt to a margin a merchant can trace.</b><br/><sub>Capture → review → confirm → ledger → gross-margin insights</sub></p>
+
+## ▍The problem
+
+A food vendor can sell out and still not know the margin on each pack. Sales, ingredient prices and receipts arrive across conversations and paper; PasarAI brings them into one reviewable daily workflow in English, Bahasa Melayu, Chinese and Manglish.
+
+## ▍How it works
+
+```mermaid
+flowchart LR
+  A["Telegram text / voice<br/>receipt evidence"] --> B["Interpret and extract"]
+  B --> C{"Merchant review<br/>and confirmation"}
+  C -->|confirmed| D["Merchant-scoped ledger"]
+  C -->|ambiguous| C
+  D --> E["Decimal-safe finance<br/>cost · revenue · gross margin"]
+  E --> F["Next.js dashboard"]
+  E --> G["Read-only price and<br/>volume scenarios"]
+  D --> H["Google Sheets sync"]
+  D --> I["Lakebase snapshots →<br/>Databricks Bronze / Silver / Gold"]
+```
+
+| Boundary | Contract |
+| --- | --- |
+| Evidence → ledger | Evidence is retained; ambiguous or low-confidence records wait for confirmation. |
+| Ledger → money | Calculations use decimal-safe values; API money values use MYR decimal strings. |
+| Scenarios → ledger | Price and volume simulations are read-only. |
+| Demo → live | The web preview can use visibly marked synthetic data; provider integrations need configuration. |
+
+---
 
 PasarAI is a multilingual, voice-first daily margin copilot for Malaysian
 owner-operated food businesses. It turns sales updates, supplier changes,
